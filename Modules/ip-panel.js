@@ -25,7 +25,7 @@ async function getLandingDetail() {
 
 function getTime() {
   const d = new Date();
-  return d.toLocaleTimeString('zh-CN', { hour12: false });
+  return d.toLocaleTimeString('en-US', { hour12: false });
 }
 
 (async () => {
@@ -33,6 +33,6 @@ function getTime() {
   $done({
     title: '',
     content:
-      `落地 IP: ${landing.ip}\n位置: ${landing.country ? '🌏 ' + landing.country : ''} ${landing.city}\n运营商: ${landing.isp}\n执行时间: ${getTime()}`
+      `Landing IP: ${landing.ip}\nLocation: ${landing.country ? '🌏 ' + landing.country : ''} ${landing.city}\nISP: ${landing.isp}\nTime: ${getTime()}`
   });
 })();
