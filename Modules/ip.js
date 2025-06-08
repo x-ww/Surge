@@ -20,12 +20,8 @@
 
     const ip = data1.query || "Unknown";
     const country = data1.country || "";
-    const countryCode = data1.countryCode || "";
     const city = data1.city || "";
     const isp = data1.isp || "";
-    const flag = countryFlagEmoji(countryCode);
-    const ipApiLocation = [country, city].filter(Boolean).join(" ");
-    const ipApiIsp = isp;
 
     let ipipIp = "";
     let ipipLocation = "";
@@ -38,9 +34,9 @@
     }
 
     $done({
-      title: ip,
+      title: "",
       content: 
-        `ip-api.com: ${ip} ${flag} ${ipApiLocation} ${ipApiIsp}\n` +
+        `ip-api.com: ${ip} ${country} ${city} ${isp}\n` +
         `IPIP.net: ${ipipIp} ${ipipLocation} ${ipipIsp}`.trim()
     });
   } catch (e) {
