@@ -1,0 +1,9 @@
+#!name=Landing IP Panel
+#!desc=Query landing IP, geolocation, ISP, and display beautifully in Surge panel
+#!category=network
+
+[Script]
+Landing IP Panel = type=generic,timeout=10,script-path=https://raw.githubusercontent.com/x-ww/Surge/main/Modules/ip-panel.js
+
+[Panel]
+Landing IP Panel = script-name=Landing IP Panel,update-interval=600
