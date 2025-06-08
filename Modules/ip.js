@@ -19,6 +19,7 @@
     const data1 = await resp1.json();
     const data2 = await resp2.json();
 
+    // ip-api.com
     const ip = data1.query || "Unknown";
     const country = data1.country || "Unknown";
     const countryCode = data1.countryCode || "";
@@ -26,13 +27,14 @@
     const isp = data1.isp || "Unknown";
     const flag = countryFlagEmoji(countryCode);
 
-    // IPIP.net 额外信息
-    const ipipIsp = data2.isp || "";
+    // IPIP.net
+    const ipipIp = data2.ip || "";
     const ipipLocation = data2.location || "";
+    const ipipIsp = data2.isp || "";
 
     $done({
       title: ip,
-      content: `Location: ${flag} ${country} ${city}\nISP: ${isp}\nIPIP: ${ipipLocation} ${ipipIsp}`.trim()
+      content: `Location: ${flag} ${country} ${city}\nISP: ${isp}\nIPIP: ${ipipIp} ${ipipLocation} ${ipipIsp}`.trim()
     });
   } catch (e) {
     $done({title: "Failed", content: "Failed to fetch"});
