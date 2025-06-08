@@ -8,7 +8,7 @@
 hostname = %APPEND% 
 
 [Script]
-IP面板 = type=generic,timeout=10,script-path=https://raw.githubusercontent.com/你的GitHub用户名/你的仓库名/main/Modules/ip-panel.js
+IP面板 = type=generic,timeout=10,script-path=https://raw.githubusercontent.com/x-ww/Surge/refs/heads/main/Modules/ip-panel.js
 
 # Event
 {{{EVENT_SCRIPT_NAME}}} = type=event
