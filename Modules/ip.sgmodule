@@ -1,8 +1,6 @@
-#!name=落地 IP 面板
-#!desc=仅显示落地 IP、地理位置（含国旗、国家、地区、城市）、运营商和执行时间。界面美观，完全中文，数据源为 ip.sb。
-#!category=网络工具
-#!icon=globe.asia.australia
-#!icon-color=#6699FF
+#!name=IP information
+#!desc=IP information
+#!category=x-ww
 #!arguments=
 #!arguments-desc=本模块无需参数，后续可扩展。
 
