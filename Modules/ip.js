@@ -11,7 +11,7 @@
 
   try {
     const [resp1, resp2] = await Promise.all([
-      fetch('http://ip-api.com/json'),
+      fetch('https://ip-api.com/json'), // 使用 https
       fetch('https://myip.ipip.net/json')
     ]);
     if (!resp1.ok || !resp2.ok) throw new Error("Request failed");
