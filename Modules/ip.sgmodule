@@ -1,12 +1,10 @@
-#!name=IP信息面板
-#!desc=查询本机国内/国外IP，显示地理位置、运营商、落地IP等详细信息
+#!name=Landing IP Panel
+#!desc=Query landing IP, geolocation, ISP
 #!category=network
 
-[MITM]
-hostname = %APPEND%
 
 [Script]
-IP面板 = type=generic,timeout=10,script-path=https://raw.githubusercontent.com/x-ww/Surge/main/Modules/ip-panel.js
+Landing IP Panel = type=generic,timeout=10,script-path=https://raw.githubusercontent.com/x-ww/Surge/main/Modules/ip-panel.js
 
 [Panel]
-IP面板 = script-name=IP面板,update-interval=600
+Landing IP Panel = script-name=Landing IP Panel,update-interval=600
