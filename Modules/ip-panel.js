@@ -49,8 +49,10 @@ function getTime() {
 (async () => {
   const cn = await getCNDetail();
   const global = await getGlobalDetail();
+  // 兼容 Surge 5+ 面板变量
+  const policy = typeof $network !== 'undefined' && $network.policy ? $network.policy : (typeof $surge !== 'undefined' && $surge.selectGroup ? $surge.selectGroup : '未知');
   $done({
-    title: `代理策略: $network.policy` || 'IP信息',
+    title: `代理策略: ${policy}`,
     content:
       `IP: ${cn.ip}\n位置: 🇨🇳 ${cn.loc}\n运营商: ${cn.isp}\n\n落地 IP: ${global.ip}\n位置: ${global.country ? '🌏 ' + global.country : ''} ${global.city}\n运营商: ${global.isp}\n执行时间: ${getTime()}`
   });
