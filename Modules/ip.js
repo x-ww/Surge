@@ -6,12 +6,13 @@
     const data = await resp.json();
     const ip = data.ip || "Unknown";
     const country = data.country || "Unknown";
+    const city = data.city || "Unknown";
     const isp = data.isp || "Unknown";
     $done({
-      title: "IP Info",
-      content: `IP: ${ip}\nCountry: ${country}\nISP: ${isp}`
+      title: ip,
+      content: `Country: ${country}\nCity: ${city}\nISP: ${isp}`
     });
   } catch (e) {
-    $done({title: "IP Info", content: "Failed to fetch"});
+    $done({title: "Failed", content: "Failed to fetch"});
   }
 })();
