@@ -1,11 +1,30 @@
 // ip-panel.js
 // 查询国内IP和国外IP并展示在Surge面板
 
-async function getIP(url) {
+async function getCNIP() {
   return new Promise((resolve) => {
-    $httpClient.get(url, (err, resp, data) => {
+    $httpClient.get({
+      url: 'http://ip.taobao.com/outGetIpInfo?ip=myip&accessKey=alibaba',
+      headers: { 'User-Agent': 'Surge' }
+    }, (err, resp, data) => {
       if (err) return resolve('查询失败');
-      // 只提取合法的IPv4或IPv6地址，且只允许整行匹配
+      try {
+        const obj = JSON.parse(data);
+        resolve(obj && obj.data && obj.data.ip ? obj.data.ip : '查询失败');
+      } catch {
+        resolve('查询失败');
+      }
+    });
+  });
+}
+
+async function getGlobalIP() {
+  return new Promise((resolve) => {
+    $httpClient.get({
+      url: 'https://ifconfig.me/ip',
+      headers: { 'User-Agent': 'curl/7.64.1' }
+    }, (err, resp, data) => {
+      if (err) return resolve('查询失败');
       const ip = (data || '').trim().match(/^((?:\d{1,3}\.){3}\d{1,3})$|^([a-fA-F0-9:]{2,})$/m);
       resolve(ip ? ip[0] : '查询失败');
     });
@@ -13,10 +32,8 @@ async function getIP(url) {
 }
 
 (async () => {
-  // 使用国内API获取国内IP
-  const cnIP = await getIP('https://api-ipv4.ip.sb/ip');
-  // 国外IP接口保持不变
-  const globalIP = await getIP('https://ifconfig.me/ip');
+  const cnIP = await getCNIP();
+  const globalIP = await getGlobalIP();
   $done({
     title: '本机IP信息',
     content: `国内IP: ${cnIP}\n国外IP: ${globalIP}`
