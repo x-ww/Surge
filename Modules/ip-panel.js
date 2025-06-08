@@ -4,15 +4,18 @@
 async function getCNDetail() {
   return new Promise((resolve) => {
     $httpClient.get({
-      url: 'https://myip.ipip.net',
+      url: 'https://api.vvhan.com/api/getIpInfo',
       headers: { 'User-Agent': 'Surge' }
     }, (err, resp, data) => {
       if (err) return resolve({ ip: '查询失败', loc: '', isp: '' });
-      // 例：当前 IP：49.77.188.64 来自于：中国 江苏省 南京市 电信
-      const match = (data || '').match(/当前 IP：([\d.]+) 来自于：(.*?)(\s+)([\u4e00-\u9fa5]+)$/);
-      if (match) {
-        resolve({ ip: match[1], loc: match[2], isp: match[4] });
-      } else {
+      try {
+        const obj = JSON.parse(data);
+        resolve({
+          ip: obj.ip || '查询失败',
+          loc: obj.info?.address || '',
+          isp: obj.info?.isp || ''
+        });
+      } catch {
         resolve({ ip: '查询失败', loc: '', isp: '' });
       }
     });
