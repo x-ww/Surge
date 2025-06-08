@@ -22,11 +22,9 @@
     $done({
       title: `🌐 IP 信息`,
       content: 
-`| 项目   | 内容                |
-| ------ | ------------------- |
-| IP     | \`${ip}\`           |
-| 位置   | ${flag} ${country} ${city} |
-| 运营商 | ${isp}              |`
+`**IP**: \`${ip}\`
+**位置**: ${flag} ${country} ${city}
+**运营商**: ${isp}`
     });
   } catch (e) {
     $done({title: "Failed", content: "Failed to fetch"});
