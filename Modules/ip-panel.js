@@ -1,44 +1,24 @@
 // ip-panel.js
-// 查询国内IP和国外IP并展示在Surge面板
+// 完全参考 net-lsp-x.sgmodule 和 net-lsp-x.js 的结构，适配 Surge 面板，使用自有API
 
-async function getCNDetail() {
+async function getDetail(type) {
   return new Promise((resolve) => {
     $httpClient.get({
-      url: 'https://net-lsp-x.com?type=cn',
+      url: `https://net-lsp-x.com?type=${type}`,
       headers: { 'User-Agent': 'Surge' }
     }, (err, resp, data) => {
-      if (err) return resolve({ ip: '查询失败', loc: '', isp: '' });
+      if (err) return resolve({ ip: '查询失败', info: '', isp: '', country: '', city: '' });
       try {
         const obj = JSON.parse(data);
         resolve({
-          ip: obj.ip || '查询失败',
-          loc: obj.loc || obj.location || '',
-          isp: obj.isp || obj.org || ''
-        });
-      } catch {
-        resolve({ ip: '查询失败', loc: '', isp: '' });
-      }
-    });
-  });
-}
-
-async function getGlobalDetail() {
-  return new Promise((resolve) => {
-    $httpClient.get({
-      url: 'https://net-lsp-x.com?type=global',
-      headers: { 'User-Agent': 'Surge' }
-    }, (err, resp, data) => {
-      if (err) return resolve({ ip: '查询失败', country: '', city: '', isp: '' });
-      try {
-        const obj = JSON.parse(data);
-        resolve({
-          ip: obj.ip || '查询失败',
+          ip: obj.ip || '-',
+          info: obj.info || obj.loc || obj.location || '',
+          isp: obj.isp || obj.org || '',
           country: obj.country || '',
-          city: obj.city || '',
-          isp: obj.isp || obj.org || ''
+          city: obj.city || ''
         });
       } catch {
-        resolve({ ip: '查询失败', country: '', city: '', isp: '' });
+        resolve({ ip: '查询失败', info: '', isp: '', country: '', city: '' });
       }
     });
   });
@@ -50,13 +30,17 @@ function getTime() {
 }
 
 (async () => {
-  const cn = await getCNDetail();
-  const global = await getGlobalDetail();
-  // 兼容 Surge 5+ 面板变量
-  const policy = typeof $network !== 'undefined' && $network.policy ? $network.policy : (typeof $surge !== 'undefined' && $surge.selectGroup ? $surge.selectGroup : '未知');
+  const cn = await getDetail('cn');
+  const global = await getDetail('global');
+  let policy = '未知';
+  if (typeof $network !== 'undefined' && $network.policy) {
+    policy = $network.policy;
+  } else if (typeof $surge !== 'undefined' && $surge.selectGroup) {
+    policy = $surge.selectGroup;
+  }
   $done({
     title: `代理策略: ${policy}`,
     content:
-      `IP: ${cn.ip}\n位置: 🇨🇳 ${cn.loc}\n运营商: ${cn.isp}\n\n落地 IP: ${global.ip}\n位置: ${global.country ? '🌏 ' + global.country : ''} ${global.city}\n运营商: ${global.isp}\n执行时间: ${getTime()}`
+      `IP: ${cn.ip}\n位置: 🇨🇳 ${cn.info}\n运营商: ${cn.isp}\n\n落地 IP: ${global.ip}\n位置: ${global.country ? '🌏 ' + global.country : ''} ${global.city}\n运营商: ${global.isp}\n执行时间: ${getTime()}`
   });
 })();
