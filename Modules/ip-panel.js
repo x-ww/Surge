@@ -37,13 +37,11 @@ function isSurgePanel() {
     const landing = await getLandingDetail();
     const flag = getFlagEmoji(landing.country_code);
     const location = `${flag ? flag + ' ' : ''}${landing.country} ${landing.region} ${landing.city}`.trim();
+    const now = new Date();
+    const time = now.toLocaleTimeString('zh-CN', { hour12: false });
     const content =
-      `落地 IP: ${landing.ip}\n位置: ${location}\n运营商: ${landing.isp}`;
-    if (isSurgePanel()) {
-      $done({ content });
-    } else {
-      $done({ content });
-    }
+      `落地 IP: ${landing.ip}\n位置: ${location}\n运营商: ${landing.isp}\n执行时间: ${time}`;
+    $done({ content });
   } catch (e) {
     $done({ content: '查询失败' });
   }
