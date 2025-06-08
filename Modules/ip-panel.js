@@ -1,5 +1,5 @@
 // ip-panel.js
-// 仅显示落地 IP、地理位置（含国旗、国家、地区、城市）、运营商，使用 ip.sb API，兼容 Surge 面板
+// 仅显示落地 IP、地理位置（含国旗、国家、地区、城市）、运营商、执行时间，使用 ip.sb API，完全中文，极简美观
 
 async function getLandingDetail() {
   return new Promise((resolve) => {
@@ -26,10 +26,6 @@ function getFlagEmoji(cc) {
   if (!cc || typeof cc !== 'string' || cc.length !== 2) return '';
   const codePoints = [...cc.toUpperCase()].map(c => 127397 + c.charCodeAt());
   return String.fromCodePoint(...codePoints);
-}
-
-function isSurgePanel() {
-  return typeof $input !== 'undefined' && $input.purpose === 'panel';
 }
 
 (async () => {
