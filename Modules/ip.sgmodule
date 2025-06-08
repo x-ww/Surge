@@ -5,7 +5,7 @@
 #!arguments-desc=本模块无需参数，后续可扩展。
 
 [Script]
-IP information = type=generic,timeout=10,script-path=https://raw.githubusercontent.com/x-ww/Surge/main/Modules/ip-panel.js
+IP information = type=generic,timeout=10,script-path=https://raw.githubusercontent.com/x-ww/Surge/refs/heads/main/Modules/ip-panel.js
 
 [Panel]
 IP information = script-name=IP information,update-interval=600
