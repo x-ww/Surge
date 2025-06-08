@@ -4,16 +4,13 @@
 async function getCNIP() {
   return new Promise((resolve) => {
     $httpClient.get({
-      url: 'http://ip.taobao.com/outGetIpInfo?ip=myip&accessKey=alibaba',
+      url: 'https://myip.ipip.net',
       headers: { 'User-Agent': 'Surge' }
     }, (err, resp, data) => {
       if (err) return resolve('查询失败');
-      try {
-        const obj = JSON.parse(data);
-        resolve(obj && obj.data && obj.data.ip ? obj.data.ip : '查询失败');
-      } catch {
-        resolve('查询失败');
-      }
+      // myip.ipip.net 返回格式：当前 IP：49.77.188.64 来自于：中国 江苏省 移动
+      const match = (data || '').match(/(\d{1,3}(?:\.\d{1,3}){3})/);
+      resolve(match ? match[1] : '查询失败');
     });
   });
 }
