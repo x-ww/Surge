@@ -27,10 +27,16 @@
     const isp = data1.isp || "Unknown";
     const flag = countryFlagEmoji(countryCode);
 
-    // IPIP.net
-    const ipipIp = data2.ip || "";
-    const ipipLocation = data2.location || "";
-    const ipipIsp = data2.isp || "";
+    // IPIP.net（新版结构）
+    let ipipIp = "";
+    let ipipLocation = "";
+    let ipipIsp = "";
+    if (data2.data) {
+      ipipIp = data2.data.ip || "";
+      const locArr = data2.data.location || [];
+      ipipLocation = locArr.slice(0, 3).filter(Boolean).join(" ");
+      ipipIsp = locArr[4] || "";
+    }
 
     $done({
       title: ip,
