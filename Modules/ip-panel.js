@@ -1,5 +1,5 @@
 // ip-panel.js
-// 仅显示落地 IP、地理位置（含国旗、国家、地区、城市）、运营商，使用 ip.sb API
+// 仅显示落地 IP、地理位置（含国旗、国家、地区、城市）、运营商，使用 ip.sb API，兼容 Surge 面板
 
 async function getLandingDetail() {
   return new Promise((resolve) => {
@@ -28,6 +28,10 @@ function getFlagEmoji(cc) {
   return String.fromCodePoint(...codePoints);
 }
 
+function isSurgePanel() {
+  return typeof $input !== 'undefined' && $input.purpose === 'panel';
+}
+
 (async () => {
   try {
     const landing = await getLandingDetail();
@@ -35,7 +39,11 @@ function getFlagEmoji(cc) {
     const location = `${flag ? flag + ' ' : ''}${landing.country} ${landing.region} ${landing.city}`.trim();
     const content =
       `落地 IP: ${landing.ip}\n位置: ${location}\n运营商: ${landing.isp}`;
-    $done({ content });
+    if (isSurgePanel()) {
+      $done({ content });
+    } else {
+      $done({ content });
+    }
   } catch (e) {
     $done({ content: '查询失败' });
   }
