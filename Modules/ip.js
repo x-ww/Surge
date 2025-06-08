@@ -1,4 +1,4 @@
-// Query current IP info (prefer IPv4, fallback to IPv6, using ip.sb)
+// Query current IP info (using ip-api.com)
 ;(async () => {
   function countryFlagEmoji(countryCode) {
     if (!countryCode || countryCode.length !== 2) return '';
@@ -9,22 +9,13 @@
     return String.fromCodePoint(...codePoints);
   }
 
-  async function fetchIP(version = 4) {
-    const resp = await fetch(`https://api.ip.sb/geoip?ip_version=${version}`);
-    if (!resp.ok) throw new Error("Request failed");
-    return await resp.json();
-  }
-
   try {
-    let data;
-    try {
-      data = await fetchIP(4); // 优先请求IPv4
-    } catch {
-      data = await fetchIP(6); // 失败则请求IPv6
-    }
-    const ip = data.ip || "Unknown";
+    const resp = await fetch('http://ip-api.com/json');
+    if (!resp.ok) throw new Error("Request failed");
+    const data = await resp.json();
+    const ip = data.query || "Unknown";
     const country = data.country || "Unknown";
-    const countryCode = data.country_code || "";
+    const countryCode = data.countryCode || "";
     const city = data.city || "Unknown";
     const isp = data.isp || "Unknown";
     const flag = countryFlagEmoji(countryCode);
