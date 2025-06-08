@@ -20,11 +20,8 @@
     const isp = data.isp || "Unknown";
     const flag = countryFlagEmoji(countryCode);
     $done({
-      title: `🌐 IP 信息`,
-      content: 
-`**IP**: \`${ip}\`
-**位置**: ${flag} ${country} ${city}
-**运营商**: ${isp}`
+      title: ip,
+      content: `Location: ${flag} ${country} ${city}\nISP: ${isp}`
     });
   } catch (e) {
     $done({title: "Failed", content: "Failed to fetch"});
