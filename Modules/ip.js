@@ -1,4 +1,4 @@
-// Query current IP info (using ip-api.com and IPIP.net)
+// Query current IP info (using ip-api.com)
 ;(async () => {
   function countryFlagEmoji(countryCode) {
     if (!countryCode || countryCode.length !== 2) return '';
@@ -10,34 +10,18 @@
   }
 
   try {
-    const [resp1, resp2] = await Promise.all([
-      fetch('https://ip-api.com/json'), // 使用 https
-      fetch('https://myip.ipip.net/json')
-    ]);
-    if (!resp1.ok || !resp2.ok) throw new Error("Request failed");
-    const data1 = await resp1.json();
-    const data2 = await resp2.json();
-
-    const ip = data1.query || "Unknown";
-    const country = data1.country || "";
-    const city = data1.city || "";
-    const isp = data1.isp || "";
-
-    let ipipIp = "";
-    let ipipLocation = "";
-    let ipipIsp = "";
-    if (data2.data) {
-      ipipIp = data2.data.ip || "";
-      const locArr = data2.data.location || [];
-      ipipLocation = locArr.slice(0, 3).filter(Boolean).join(" ");
-      ipipIsp = locArr[4] || "";
-    }
-
+    const resp = await fetch('http://ip-api.com/json');
+    if (!resp.ok) throw new Error("Request failed");
+    const data = await resp.json();
+    const ip = data.query || "Unknown";
+    const country = data.country || "Unknown";
+    const countryCode = data.countryCode || "";
+    const city = data.city || "Unknown";
+    const isp = data.isp || "Unknown";
+    const flag = countryFlagEmoji(countryCode);
     $done({
-      title: "",
-      content: 
-        `ip-api.com: ${ip} ${country} ${city} ${isp}\n` +
-        `IPIP.net: ${ipipIp} ${ipipLocation} ${ipipIsp}`.trim()
+      title: ip,
+      content: `Location: ${flag} ${country} ${city}\nISP: ${isp}`
     });
   } catch (e) {
     $done({title: "Failed", content: "Failed to fetch"});
