@@ -5,8 +5,8 @@ async function getIP(url) {
   return new Promise((resolve) => {
     $httpClient.get(url, (err, resp, data) => {
       if (err) return resolve('查询失败');
-      // 只提取合法的IPv4或IPv6地址
-      const ip = (data || '').trim().match(/((?:\d{1,3}\.){3}\d{1,3})|([a-fA-F0-9:]{2,})/);
+      // 只提取合法的IPv4或IPv6地址，且只允许整行匹配
+      const ip = (data || '').trim().match(/^((?:\d{1,3}\.){3}\d{1,3})$|^([a-fA-F0-9:]{2,})$/m);
       resolve(ip ? ip[0] : '查询失败');
     });
   });
