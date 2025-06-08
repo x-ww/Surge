@@ -5,7 +5,7 @@
 #!arguments-desc=本模块无需参数，后续可扩展。
 
 [Script]
-落地 IP 面板 = type=generic,timeout=10,script-path=https://raw.githubusercontent.com/x-ww/Surge/main/Modules/ip-panel.js
+IP information = type=generic,timeout=10,script-path=https://raw.githubusercontent.com/x-ww/Surge/main/Modules/ip-panel.js
 
 [Panel]
-落地 IP 面板 = script-name=落地 IP 面板,update-interval=600
+IP information = script-name=IP information,update-interval=600
