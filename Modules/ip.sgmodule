@@ -6,4 +6,4 @@
 IP 查询 = script-name=ip-query, title=IP 查询, content-type=markdown, update-interval=600
 
 [Script]
-ip-query = type=generic, script-path=https://raw.githubusercontent.com/x-ww/Surge/refs/heads/main/Modules/ip-query.js
+ip-query = type=webhook, script-path=https://raw.githubusercontent.com/x-ww/Surge/refs/heads/main/Modules/ip-query.js, timeout=10, argument=url=https://ip-api.com/json
