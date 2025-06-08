@@ -36,13 +36,23 @@ function getTime() {
   return d.toLocaleTimeString('zh-CN', { hour12: false });
 }
 
+function isSurgePanel() {
+  return typeof $input !== 'undefined' && $input.purpose === 'panel';
+}
+
 (async () => {
-  const landing = await getLandingDetail();
-  const flag = getFlagEmoji(landing.country_code);
-  const location = `${flag ? flag + ' ' : ''}${landing.country} ${landing.region} ${landing.city}`.trim();
-  $done({
-    title: '',
-    content:
-      `落地 IP: ${landing.ip}\n位置: ${location}\n运营商: ${landing.isp}\n执行时间: ${getTime()}`
-  });
+  try {
+    const landing = await getLandingDetail();
+    const flag = getFlagEmoji(landing.country_code);
+    const location = `${flag ? flag + ' ' : ''}${landing.country} ${landing.region} ${landing.city}`.trim();
+    const content =
+      `落地 IP: ${landing.ip}\n位置: ${location}\n运营商: ${landing.isp}\n执行时间: ${getTime()}`;
+    if (isSurgePanel()) {
+      $done({ title: '落地 IP 面板', content });
+    } else {
+      $done({ content });
+    }
+  } catch (e) {
+    $done({ title: '落地 IP 面板', content: '查询失败' });
+  }
 })();
