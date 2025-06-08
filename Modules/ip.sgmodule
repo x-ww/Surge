@@ -1,13 +1,9 @@
-#!name=IP信息面板
-#!desc=落地IP、地理位置（含国旗、国家、地区、城市）、运营商、执行时间，极简美观，数据源ip.sb。
-#!category=网络工具
-#!icon=globe.asia.australia
-#!icon-color=#6699FF
-#!arguments=
-#!arguments-desc=本模块无需参数，后续可扩展。
-
-[Script]
-IP信息面板 = type=generic,timeout=10,script-path=https://raw.githubusercontent.com/x-ww/Surge/refs/heads/main/Modules/ip-panel.js
+#!name=IP 查询面板
+#!desc=显示当前出口 IP、地理位置、运营商等信息
+#!system=mac
 
 [Panel]
-IP信息面板 = script-name=IP信息面板,update-interval=600
+IP 查询 = script-name=ip-query, title=IP 查询, content-type=markdown, update-interval=600
+
+[Script]
+ip-query = type=generic, script-path=ip-query.js
