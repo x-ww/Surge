@@ -1,4 +1,4 @@
-// Query current IP info (using ip-api.com) and show DNS info if available
+// Query current IP info (using ip-api.com and IPIP.net)
 ;(async () => {
   function countryFlagEmoji(countryCode) {
     if (!countryCode || countryCode.length !== 2) return '';
@@ -9,24 +9,30 @@
     return String.fromCodePoint(...codePoints);
   }
 
-  let dnsInfo = "";
-  if ($network && $network.dns) {
-    dnsInfo = $network.dns.join(", ");
-  }
-
   try {
-    const resp = await fetch('http://ip-api.com/json');
-    if (!resp.ok) throw new Error("Request failed");
-    const data = await resp.json();
-    const ip = data.query || "Unknown";
-    const country = data.country || "Unknown";
-    const countryCode = data.countryCode || "";
-    const city = data.city || "Unknown";
-    const isp = data.isp || "Unknown";
+    // 并发请求两个接口
+    const [resp1, resp2] = await Promise.all([
+      fetch('http://ip-api.com/json'),
+      fetch('https://myip.ipip.net/json')
+    ]);
+    if (!resp1.ok || !resp2.ok) throw new Error("Request failed");
+    const data1 = await resp1.json();
+    const data2 = await resp2.json();
+
+    const ip = data1.query || "Unknown";
+    const country = data1.country || "Unknown";
+    const countryCode = data1.countryCode || "";
+    const city = data1.city || "Unknown";
+    const isp = data1.isp || "Unknown";
     const flag = countryFlagEmoji(countryCode);
+
+    // IPIP.net 额外信息
+    const ipipIsp = data2.isp || "";
+    const ipipLocation = data2.location || "";
+
     $done({
       title: ip,
-      content: `Location: ${flag} ${country} ${city}\nISP: ${isp}\nDNS: ${dnsInfo || "Unknown"}`
+      content: `Location: ${flag} ${country} ${city}\nISP: ${isp}\nIPIP: ${ipipLocation} ${ipipIsp}`.trim()
     });
   } catch (e) {
     $done({title: "Failed", content: "Failed to fetch"});
