@@ -1,38 +1,57 @@
 // ip-panel.js
 // 查询国内IP和国外IP并展示在Surge面板
 
-async function getCNIP() {
+async function getCNDetail() {
   return new Promise((resolve) => {
     $httpClient.get({
       url: 'https://myip.ipip.net',
       headers: { 'User-Agent': 'Surge' }
     }, (err, resp, data) => {
-      if (err) return resolve('查询失败');
-      // myip.ipip.net 返回格式：当前 IP：49.77.188.64 来自于：中国 江苏省 移动
-      const match = (data || '').match(/(\d{1,3}(?:\.\d{1,3}){3})/);
-      resolve(match ? match[1] : '查询失败');
+      if (err) return resolve({ ip: '查询失败', loc: '', isp: '' });
+      // 例：当前 IP：49.77.188.64 来自于：中国 江苏省 南京市 电信
+      const match = (data || '').match(/当前 IP：([\d.]+) 来自于：(.*?)(\s+)([\u4e00-\u9fa5]+)$/);
+      if (match) {
+        resolve({ ip: match[1], loc: match[2], isp: match[4] });
+      } else {
+        resolve({ ip: '查询失败', loc: '', isp: '' });
+      }
     });
   });
 }
 
-async function getGlobalIP() {
+async function getGlobalDetail() {
   return new Promise((resolve) => {
     $httpClient.get({
-      url: 'https://ifconfig.me/ip',
-      headers: { 'User-Agent': 'curl/7.64.1' }
+      url: 'http://ip-api.com/json/?lang=zh-CN',
+      headers: { 'User-Agent': 'Surge' }
     }, (err, resp, data) => {
-      if (err) return resolve('查询失败');
-      const ip = (data || '').trim().match(/^((?:\d{1,3}\.){3}\d{1,3})$|^([a-fA-F0-9:]{2,})$/m);
-      resolve(ip ? ip[0] : '查询失败');
+      if (err) return resolve({ ip: '查询失败', country: '', city: '', isp: '' });
+      try {
+        const obj = JSON.parse(data);
+        resolve({
+          ip: obj.query || '查询失败',
+          country: obj.country || '',
+          city: obj.city || '',
+          isp: obj.isp || ''
+        });
+      } catch {
+        resolve({ ip: '查询失败', country: '', city: '', isp: '' });
+      }
     });
   });
+}
+
+function getTime() {
+  const d = new Date();
+  return d.toLocaleTimeString('zh-CN', { hour12: false });
 }
 
 (async () => {
-  const cnIP = await getCNIP();
-  const globalIP = await getGlobalIP();
+  const cn = await getCNDetail();
+  const global = await getGlobalDetail();
   $done({
-    title: '本机IP信息',
-    content: `国内IP: ${cnIP}\n国外IP: ${globalIP}`
+    title: `代理策略: $network.policy` || 'IP信息',
+    content:
+      `IP: ${cn.ip}\n位置: 🇨🇳 ${cn.loc}\n运营商: ${cn.isp}\n\n落地 IP: ${global.ip}\n位置: ${global.country ? '🌏 ' + global.country : ''} ${global.city}\n运营商: ${global.isp}\n执行时间: ${getTime()}`
   });
 })();
