@@ -1,5 +1,5 @@
 #!name=IP信息面板
-#!desc=查询本机国内/国外IP
+#!desc=查询本机国内/国外IP，显示地理位置、运营商、落地IP等详细信息
 #!category=network
 
 [MITM]

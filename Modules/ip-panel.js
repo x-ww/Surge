@@ -25,14 +25,14 @@ async function getCNDetail() {
 async function getGlobalDetail() {
   return new Promise((resolve) => {
     $httpClient.get({
-      url: 'http://ip-api.com/json/?lang=zh-CN',
+      url: 'https://net-lsp-x.com?type=global',
       headers: { 'User-Agent': 'Surge' }
     }, (err, resp, data) => {
       if (err) return resolve({ ip: '查询失败', country: '', city: '', isp: '' });
       try {
         const obj = JSON.parse(data);
         resolve({
-          ip: obj.query || '查询失败',
+          ip: obj.ip || '查询失败',
           country: obj.country || '',
           city: obj.city || '',
           isp: obj.isp || ''
