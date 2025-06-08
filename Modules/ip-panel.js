@@ -3,7 +3,7 @@
 
 async function getLandingDetail() {
   return new Promise((resolve) => {
-    $httpClient.get('https://ipwho.is/', (err, resp, data) => {
+    $httpClient.get('https://api.ip.sb/geoip', (err, resp, data) => {
       if (err) return resolve({ ip: '查询失败', country: '', region: '', city: '', country_code: '', isp: '', flag: {} });
       try {
         const obj = JSON.parse(data);
