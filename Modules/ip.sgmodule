@@ -1,6 +1,6 @@
-#!name=IP 查询
-#!desc=显示当前设备的公网 IP、国家和运营商（数据来自 ip.sb）
-#!author=你的名字
+#!name=IP Info
+#!desc=Display the current device's public IP, country, and ISP (data from ip.sb)
+#!category=x-ww
 #!version=1.0
 #!icon=globe.asia.australia
 #!icon-color=#6699FF
