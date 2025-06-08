@@ -4,8 +4,7 @@
 async function getLandingDetail() {
   return new Promise((resolve) => {
     $httpClient.get({
-      url: 'https://ipwho.is/',
-      headers: { 'User-Agent': 'Surge' }
+      url: 'https://ipwho.is/'
     }, (err, resp, data) => {
       if (err) return resolve({ ip: '查询失败', country: '', region: '', city: '', country_code: '', isp: '', flag: {} });
       try {
