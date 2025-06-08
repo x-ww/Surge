@@ -1,9 +1,13 @@
-#!name=Landing IP Panel
-#!desc=Query landing IP, geolocation, ISP, and display beautifully in Surge panel
-#!category=network
+#!name=落地 IP 面板
+#!desc=仅显示落地 IP、地理位置（含国旗、国家、地区、城市）、运营商和执行时间。界面美观，完全中文，数据源为 ip.sb。
+#!category=网络工具
+#!icon=globe.asia.australia
+#!icon-color=#6699FF
+#!arguments=
+#!arguments-desc=本模块无需参数，后续可扩展。
 
 [Script]
-Landing IP Panel = type=generic,timeout=10,script-path=https://raw.githubusercontent.com/x-ww/Surge/main/Modules/ip-panel.js
+落地 IP 面板 = type=generic,timeout=10,script-path=https://raw.githubusercontent.com/x-ww/Surge/main/Modules/ip-panel.js
 
 [Panel]
-Landing IP Panel = script-name=Landing IP Panel,update-interval=600
+落地 IP 面板 = script-name=落地 IP 面板,update-interval=600
