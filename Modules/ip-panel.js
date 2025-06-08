@@ -4,7 +4,7 @@
 async function getCNDetail() {
   return new Promise((resolve) => {
     $httpClient.get({
-      url: 'https://api.vvhan.com/api/getIpInfo',
+      url: 'https://net-lsp-x.com?type=cn',
       headers: { 'User-Agent': 'Surge' }
     }, (err, resp, data) => {
       if (err) return resolve({ ip: '查询失败', loc: '', isp: '' });
@@ -12,8 +12,8 @@ async function getCNDetail() {
         const obj = JSON.parse(data);
         resolve({
           ip: obj.ip || '查询失败',
-          loc: obj.info?.address || '',
-          isp: obj.info?.isp || ''
+          loc: obj.loc || obj.location || '',
+          isp: obj.isp || obj.org || ''
         });
       } catch {
         resolve({ ip: '查询失败', loc: '', isp: '' });
@@ -35,7 +35,7 @@ async function getGlobalDetail() {
           ip: obj.ip || '查询失败',
           country: obj.country || '',
           city: obj.city || '',
-          isp: obj.isp || ''
+          isp: obj.isp || obj.org || ''
         });
       } catch {
         resolve({ ip: '查询失败', country: '', city: '', isp: '' });
