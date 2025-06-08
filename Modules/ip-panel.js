@@ -13,7 +13,9 @@ async function getIP(url) {
 }
 
 (async () => {
-  const cnIP = await getIP('http://ip.sb/ip');
+  // 使用国内API获取国内IP
+  const cnIP = await getIP('https://api-ipv4.ip.sb/ip');
+  // 国外IP接口保持不变
   const globalIP = await getIP('https://ifconfig.me/ip');
   $done({
     title: '本机IP信息',
