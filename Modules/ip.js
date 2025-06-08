@@ -10,7 +10,6 @@
   }
 
   try {
-    // 并发请求两个接口
     const [resp1, resp2] = await Promise.all([
       fetch('http://ip-api.com/json'),
       fetch('https://myip.ipip.net/json')
@@ -19,15 +18,15 @@
     const data1 = await resp1.json();
     const data2 = await resp2.json();
 
-    // ip-api.com
     const ip = data1.query || "Unknown";
-    const country = data1.country || "Unknown";
+    const country = data1.country || "";
     const countryCode = data1.countryCode || "";
-    const city = data1.city || "Unknown";
-    const isp = data1.isp || "Unknown";
+    const city = data1.city || "";
+    const isp = data1.isp || "";
     const flag = countryFlagEmoji(countryCode);
+    const ipApiLocation = [country, city].filter(Boolean).join(" ");
+    const ipApiIsp = isp;
 
-    // IPIP.net（新版结构）
     let ipipIp = "";
     let ipipLocation = "";
     let ipipIsp = "";
@@ -40,7 +39,9 @@
 
     $done({
       title: ip,
-      content: `Location: ${flag} ${country} ${city}\nISP: ${isp}\nIPIP: ${ipipIp} ${ipipLocation} ${ipipIsp}`.trim()
+      content: 
+        `ip-api.com: ${ip} ${flag} ${ipApiLocation} ${ipApiIsp}\n` +
+        `IPIP.net: ${ipipIp} ${ipipLocation} ${ipipIsp}`.trim()
     });
   } catch (e) {
     $done({title: "Failed", content: "Failed to fetch"});
