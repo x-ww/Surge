@@ -18,10 +18,10 @@
         const isp = data.isp || data.organization || data.org || "Unknown";
         const asn = data.asn ? `AS${data.asn}` : "";
         let lines = [];
-        lines.push(`🌐 <b>${ip}</b>`);
-        lines.push(`📍 <b>${country}${region ? ' ' + region : ''} ${city}</b>`.replace(/ +/g, ' ').trim());
-        if (asn) lines.push(`🆔 ASN: <b>${asn}</b>`);
-        if (isp) lines.push(`🏢 ISP: <b>${isp}</b>`);
+        lines.push(`🌐 ${ip}`);
+        lines.push(`📍 ${country}${region ? ' ' + region : ''} ${city}`.replace(/ +/g, ' ').trim());
+        if (asn) lines.push(`🆔 ASN: ${asn}`);
+        if (isp) lines.push(`🏢 ISP: ${isp}`);
         $done({
           title: `IP 信息`,
           content: lines.join("\n")
