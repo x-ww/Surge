@@ -17,16 +17,11 @@
         const city = data.city || "Unknown";
         const isp = data.isp || data.organization || data.org || "Unknown";
         const asn = data.asn ? `AS${data.asn}` : "";
-        const timezone = data.timezone || "";
-        const lat = data.latitude ? data.latitude.toFixed(2) : "";
-        const lon = data.longitude ? data.longitude.toFixed(2) : "";
         let lines = [];
         lines.push(`🌐 <b>${ip}</b>`);
         lines.push(`📍 <b>${country}${region ? ' ' + region : ''} ${city}</b>`.replace(/ +/g, ' ').trim());
         if (asn) lines.push(`🆔 ASN: <b>${asn}</b>`);
         if (isp) lines.push(`🏢 ISP: <b>${isp}</b>`);
-        if (timezone) lines.push(`⏰ 时区: <b>${timezone}</b>`);
-        if (lat && lon) lines.push(`🗺️ 坐标: <b>${lat}, ${lon}</b>`);
         $done({
           title: `IP 信息`,
           content: lines.join("\n")
