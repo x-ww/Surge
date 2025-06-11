@@ -4,8 +4,8 @@
     $httpClient.get('https://api.ip.sb/geoip', (err, resp, body) => {
       if (err) {
         $done({
-          title: "Failed",
-          content: `Failed to fetch: ${err}`
+          title: "❌ 查询失败",
+          content: `获取信息失败：${err}`
         });
         return;
       }
@@ -13,23 +13,35 @@
         const data = JSON.parse(body);
         const ip = data.ip || "Unknown";
         const country = data.country || "Unknown";
+        const region = data.region || "";
         const city = data.city || "Unknown";
         const isp = data.isp || data.organization || data.org || "Unknown";
+        const asn = data.asn ? `AS${data.asn}` : "";
+        const timezone = data.timezone || "";
+        const lat = data.latitude ? data.latitude.toFixed(2) : "";
+        const lon = data.longitude ? data.longitude.toFixed(2) : "";
+        let lines = [];
+        lines.push(`🌐 <b>${ip}</b>`);
+        lines.push(`📍 <b>${country}${region ? ' ' + region : ''} ${city}</b>`.replace(/ +/g, ' ').trim());
+        if (asn) lines.push(`🆔 ASN: <b>${asn}</b>`);
+        if (isp) lines.push(`🏢 ISP: <b>${isp}</b>`);
+        if (timezone) lines.push(`⏰ 时区: <b>${timezone}</b>`);
+        if (lat && lon) lines.push(`🗺️ 坐标: <b>${lat}, ${lon}</b>`);
         $done({
-          title: ip,
-          content: `Location: ${country} ${city}\nISP: ${isp}`
+          title: `IP 信息`,
+          content: lines.join("\n")
         });
       } catch (e) {
         $done({
-          title: "Failed",
-          content: `Failed to parse: ${e.message || e}`
+          title: "❌ 解析失败",
+          content: `数据解析失败：${e.message || e}`
         });
       }
     });
   } catch (e) {
     $done({
-      title: "Failed",
-      content: `Failed to fetch: ${e.message || e}`
+      title: "❌ 查询失败",
+      content: `获取信息失败：${e.message || e}`
     });
   }
 })();
