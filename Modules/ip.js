@@ -1,4 +1,4 @@
-// Query current IP info (using ip-api.com)
+// 查询当前 IP 信息（使用 ip.sb）
 ;(async () => {
   function countryFlagEmoji(countryCode) {
     if (!countryCode || countryCode.length !== 2) return '';
@@ -11,7 +11,7 @@
 
   try {
     const resp = await fetch('https://ip.sb/geoip');
-    if (!resp.ok) throw new Error("Request failed");
+    if (!resp.ok) throw new Error(`Request failed: ${resp.status}`);
     const data = await resp.json();
     const ip = data.ip || "Unknown";
     const country = data.country || "Unknown";
@@ -24,6 +24,9 @@
       content: `Location: ${flag} ${country} ${city}\nISP: ${isp}`
     });
   } catch (e) {
-    $done({title: "Failed", content: "Failed to fetch"});
+    $done({
+      title: "Failed",
+      content: `Failed to fetch: ${e.message || e}`
+    });
   }
 })();
