@@ -10,14 +10,14 @@
   }
 
   try {
-    const resp = await fetch('http://ip-api.com/json');
+    const resp = await fetch('https://ip.sb/geoip');
     if (!resp.ok) throw new Error("Request failed");
     const data = await resp.json();
-    const ip = data.query || "Unknown";
+    const ip = data.ip || "Unknown";
     const country = data.country || "Unknown";
-    const countryCode = data.countryCode || "";
+    const countryCode = data.country_code || "";
     const city = data.city || "Unknown";
-    const isp = data.isp || "Unknown";
+    const isp = data.organization || "Unknown";
     const flag = countryFlagEmoji(countryCode);
     $done({
       title: ip,
