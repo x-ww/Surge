@@ -1,7 +1,7 @@
-// 查询当前 IP 信息（使用 ifconfig.co）
+// 查询当前 IP 信息（使用 ip.sb）
 ;(async () => {
   try {
-    $httpClient.get('https://ifconfig.co/json', (err, resp, body) => {
+    $httpClient.get('https://api.ip.sb/geoip', (err, resp, body) => {
       if (err) {
         $done({
           title: "Failed",
@@ -14,10 +14,10 @@
         const ip = data.ip || "Unknown";
         const country = data.country || "Unknown";
         const city = data.city || "Unknown";
-        const org = data.org || "Unknown";
+        const isp = data.isp || data.organization || data.org || "Unknown";
         $done({
           title: ip,
-          content: `Location: ${country} ${city}\nISP: ${org}`
+          content: `Location: ${country} ${city}\nISP: ${isp}`
         });
       } catch (e) {
         $done({
