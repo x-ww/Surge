@@ -1,5 +1,5 @@
 #!name=IP Info
-#!desc=Display the current device's public IP, country, and ISP (data from ip.sb)
+#!desc=Display the current device's public IP, country
 #!category=x-ww
 #!version=1.0
 #!icon=globe.asia.australia
