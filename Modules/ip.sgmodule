@@ -5,7 +5,7 @@
 #!icon-color=#6699FF
 
 [Script]
-IP面板 = type=generic,timeout=10,script-path=https://raw.githubusercontent.com/x-ww/Surge/refs/heads/main/Modules/ip.js,argument="icon=globe.asia.australia&icon-color=#6699FF"
+IP面板 = type=generic,timeout=10,script-path=https://cdn.jsdelivr.net/gh/x-ww/Surge@main/Modules/ip.js,argument="icon=globe.asia.australia&icon-color=#6699FF"
 
 [Panel]
 IP面板 = script-name=IP面板,update-interval=3600
