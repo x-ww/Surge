@@ -1,8 +1,14 @@
 // 查询当前 IP 信息（使用 ip.sb）
 (async () => {
+  const args = Object.fromEntries(
+    ($argument || "").split("&").filter(Boolean).map(s => s.split("="))
+  );
+
   const showError = (msg) => $done({
     title: "❌ 查询失败",
-    content: msg
+    content: msg,
+    icon: args.icon || "globe.asia.australia",
+    "icon-color": args["icon-color"] || "#6699FF"
   });
 
   $httpClient.get('https://api.ip.sb/geoip', (err, resp, body) => {
@@ -32,7 +38,9 @@
 
       $done({
         title: "IP 信息",
-        content: lines.join("\n")
+        content: lines.join("\n"),
+        icon: args.icon || "globe.asia.australia",
+        "icon-color": args["icon-color"] || "#6699FF"
       });
     } catch (e) {
       showError(`解析失败：${e.message || e}`);
