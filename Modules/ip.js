@@ -7,22 +7,22 @@
     })
   );
 
-  const icon = args.icon || "globe.asia.australia";
+  const icon      = args.icon || "globe.asia.australia";
   const iconColor = args["icon-color"] || "#6699FF";
 
   const showError = (msg) => $done({
-    title: "❌ 查询失败",
-    content: msg,
+    title:       "❌ 查询失败",
+    content:     msg,
     icon,
-    "icon-color": iconColor
+    "icon-color": iconColor,
   });
 
-  const flag = (code) =>
-    code
-      ? [...code.toUpperCase()].map(c =>
-          String.fromCodePoint(0x1F1E6 - 65 + c.charCodeAt(0))
-        ).join("")
-      : "🌍";
+  const flag = (code) => {
+    if (!code) return "";
+    return [...code.toUpperCase()]
+      .map(c => String.fromCodePoint(0x1F1E6 - 65 + c.charCodeAt(0)))
+      .join("");
+  };
 
   const fetchWithTimeout = (url, timeout = 8000) =>
     new Promise((resolve, reject) => {
@@ -35,38 +35,42 @@
     });
 
   try {
-    const { resp, body } = await fetchWithTimeout('https://api.ip.sb/geoip');
+    const { resp, body } = await fetchWithTimeout("https://api.ip.sb/geoip");
+
     if (resp.status !== 200) return showError(`HTTP 错误：${resp.status}`);
 
     const {
-      ip = "Unknown",
-      country = "Unknown",
+      ip           = "Unknown",
+      country      = "",
       country_code = "",
-      city = "Unknown",
+      city         = "",
       organization = "",
-      asn = ""
+      asn          = "",
     } = JSON.parse(body);
 
-    const isp = organization || "Unknown";
+    const isp      = organization || "";
+    const emoji    = flag(country_code);
+    const now      = new Date();
+    const time     = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
 
-    const now = new Date();
-    const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-
-    const location = `${flag(country_code)} ${country} ${city}`.replace(/ +/g, ' ').trim();
+    // 地理位置：城市 + 国家，前置国旗
+    const parts    = [city, country].filter(Boolean).join(", ");
+    const location = emoji ? `${emoji} ${parts}` : parts;
 
     const lines = [
       `🌐 ${ip}`,
       location,
-      asn ? `🔢 ASN: AS${asn}` : null,
-      isp !== "Unknown" ? `🏢 ISP: ${isp}` : null
+      asn  ? `🔢 AS${asn}`  : null,
+      isp  ? `🏢 ${isp}`    : null,
     ].filter(Boolean);
 
     $done({
-      title: `IP 信息   ${time}`,
-      content: lines.join("\n"),
+      title:       `IP 信息 · ${time}`,
+      content:     lines.join("\n"),
       icon,
-      "icon-color": iconColor
+      "icon-color": iconColor,
     });
+
   } catch (e) {
     showError(e.message || "未知错误");
   }
