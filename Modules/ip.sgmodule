@@ -1,7 +1,6 @@
 #!name=IP Info
-#!desc=Display the current device's public IP, country
+#!desc=Display IP, location, ISP and ASN info
 #!category=x-ww
-#!version=1.0
 #!icon=globe.asia.australia
 #!icon-color=#6699FF
 
@@ -9,4 +8,4 @@
 IP面板 = type=generic,timeout=10,script-path=https://raw.githubusercontent.com/x-ww/Surge/refs/heads/main/Modules/ip.js,argument="icon=globe.asia.australia&icon-color=#6699FF"
 
 [Panel]
-IP面板 = script-name=IP面板,update-interval=600
+IP面板 = script-name=IP面板,update-interval=3600
