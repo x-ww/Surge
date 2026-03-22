@@ -38,6 +38,9 @@
     const { resp, body } = await fetchWithTimeout('https://api.ip.sb/geoip');
     if (resp.status !== 200) return showError(`HTTP 错误：${resp.status}`);
 
+    const data = JSON.parse(body);
+    console.log(JSON.stringify(data)); // 调试用，确认字段后可删除
+
     const {
       ip = "Unknown",
       country = "Unknown",
@@ -46,21 +49,25 @@
       city = "Unknown",
       organization = "",
       asn = ""
-    } = JSON.parse(body);
+    } = data;
 
     const isp = organization || "Unknown";
+
+    const now = new Date();
+    const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
     const location = `${flag(country_code)} ${country}${region ? ' ' + region : ''} ${city}`
       .replace(/ +/g, ' ').trim();
 
     const lines = [
       `🌐 ${ip}`,
       location,
-      asn ? `🆔 ASN: AS${asn}` : null,
+      asn ? `🔢 ASN: AS${asn}` : null,
       isp !== "Unknown" ? `🏢 ISP: ${isp}` : null
     ].filter(Boolean);
 
     $done({
-      title: "IP 信息",
+      title: `IP 信息   🕐 ${time}`,
       content: lines.join("\n"),
       icon,
       "icon-color": iconColor
