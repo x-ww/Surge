@@ -1,4 +1,3 @@
-// 查询当前 IP 信息（使用 ip.sb）
 (async () => {
   const args = Object.fromEntries(
     ($argument || "").split("&").filter(Boolean).map(s => {
@@ -11,7 +10,7 @@
   const iconColor = args["icon-color"] || "#6699FF";
 
   const showError = (msg) => $done({
-    title:       "❌ 查询失败",
+    title:       "IP 信息",
     content:     msg,
     icon,
     "icon-color": iconColor,
@@ -48,20 +47,20 @@
       asn          = "",
     } = JSON.parse(body);
 
-    const isp      = organization || "";
-    const emoji    = flag(country_code);
-    const now      = new Date();
-    const time     = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
+    const isp   = organization || "";
+    const emoji = flag(country_code);
+    const now   = new Date();
+    const time  = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
 
-    // 地理位置：城市 + 国家，前置国旗
     const parts    = [city, country].filter(Boolean).join(", ");
     const location = emoji ? `${emoji} ${parts}` : parts;
 
+    const asnIsp = [asn ? `AS${asn}` : null, isp || null].filter(Boolean).join(" · ");
+
     const lines = [
-      `🌐 ${ip}`,
+      ip,
       location,
-      asn  ? `🔢 AS${asn}`  : null,
-      isp  ? `🏢 ${isp}`    : null,
+      asnIsp,
     ].filter(Boolean);
 
     $done({
