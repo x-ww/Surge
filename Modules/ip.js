@@ -6,22 +6,15 @@
     })
   );
 
-  const icon      = args.icon || "globe.asia.australia";
+  const icon      = args.icon || "";
   const iconColor = args["icon-color"] || "#6699FF";
 
   const showError = (msg) => $done({
-    title:       "IP 信息",
+    title:       "查询失败",
     content:     msg,
     icon,
     "icon-color": iconColor,
   });
-
-  const flag = (code) => {
-    if (!code) return "";
-    return [...code.toUpperCase()]
-      .map(c => String.fromCodePoint(0x1F1E6 - 65 + c.charCodeAt(0)))
-      .join("");
-  };
 
   const fetchWithTimeout = (url, timeout = 8000) =>
     new Promise((resolve, reject) => {
@@ -41,30 +34,19 @@
     const {
       ip           = "Unknown",
       country      = "",
-      country_code = "",
       city         = "",
       organization = "",
       asn          = "",
     } = JSON.parse(body);
 
-    const isp   = organization || "";
-    const emoji = flag(country_code);
-    const now   = new Date();
-    const time  = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
-
-    const parts    = [city, country].filter(Boolean).join(", ");
-    const location = emoji ? `${emoji} ${parts}` : parts;
-
+    const isp    = organization || "";
+    const parts  = [city, country].filter(Boolean).join(", ");
     const asnIsp = [asn ? `AS${asn}` : null, isp || null].filter(Boolean).join(" · ");
 
-    const lines = [
-      ip,
-      location,
-      asnIsp,
-    ].filter(Boolean);
+    const lines = [parts, asnIsp].filter(Boolean);
 
     $done({
-      title:       `IP 信息 · ${time}`,
+      title:       ip,
       content:     lines.join("\n"),
       icon,
       "icon-color": iconColor,
