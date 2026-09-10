@@ -1,58 +1,81 @@
 (async () => {
+  // 面板只有 4 个槽位:title / content / icon / icon-color,没有 CSS,不可点击。
+  // 显示文本保持不变,设计预算全花在"文本不出丑"上:
+  //   1. 空字段不产出残缺行(原版 city 为空时会渲染出 ", China")
+  //   2. 失败不显示"查询失败"裸错误,回落到上次成功值并标注时间
+  //   3. 失败态用原生 style=alert,深浅色由系统着色,对比度不会崩
+  const CACHE_KEY = "ip-panel-last";
+
   const args = Object.fromEntries(
     ($argument || "").split("&").filter(Boolean).map(s => {
       const i = s.indexOf("=");
+      if (i < 0) return [s, ""];
       return [s.slice(0, i), decodeURIComponent(s.slice(i + 1))];
     })
   );
 
-  const icon      = args.icon || "";
-  const iconColor = args["icon-color"] || "#6699FF";
-
-  const showError = (msg) => $done({
-    title:       "查询失败",
-    content:     msg,
-    icon,
-    "icon-color": iconColor,
+  // style 一旦给出,icon / icon-color 会被忽略,所以成功态不传 style,
+  // 保留原脚本自定义 icon 的能力。
+  const done = (title, content, style) => $done({
+    title,
+    content,
+    ...(style ? { style } : {}),
+    ...(args.icon ? { icon: args.icon, "icon-color": args["icon-color"] || "#5B7FA6" } : {}),
   });
 
   const fetchWithTimeout = (url, timeout = 8000) =>
     new Promise((resolve, reject) => {
       const timer = setTimeout(() => reject(new Error("请求超时")), timeout);
-      $httpClient.get(url, (err, resp, body) => {
+      $httpClient.get({ url, timeout: timeout / 1000 }, (err, resp, body) => {
         clearTimeout(timer);
         if (err) return reject(new Error(err));
         resolve({ resp, body });
       });
     });
 
+  // 只有两个字段都有才拼 "city, country";否则单出一个,避免残缺分隔符
+  const joinCityCountry = (city, country) => [city, country].filter(Boolean).join(", ");
+
+  const render = (geo) => {
+    const line1 = joinCityCountry(geo.city, geo.country);
+    const line2 = [geo.asn ? `AS${geo.asn}` : null, geo.isp].filter(Boolean).join(" · ");
+    return [line1, line2].filter(Boolean).join("\n");
+  };
+
+  // 时间戳只用在失败路径,正常显示与该脚本原行为完全一致
+  const stamp = (ts) => {
+    const d = new Date(ts);
+    const p = (n) => String(n).padStart(2, "0");
+    return `${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  };
+
+  const staleFallback = (reason) => {
+    let cached = null;
+    try { cached = JSON.parse($persistentStore.read(CACHE_KEY) || "null"); } catch (_) {}
+    if (cached && cached.geo && cached.at) {
+      return done(cached.geo.ip || "Unknown", `${render(cached.geo)}\n更新于 ${stamp(cached.at)}`, "alert");
+    }
+    // ponytail: 首次运行且请求失败时无值可回落,只能裸报错
+    return done("查询失败", reason, "error");
+  };
+
   try {
     const { resp, body } = await fetchWithTimeout("https://api.ip.sb/geoip");
+    if (resp.status !== 200) return staleFallback(`HTTP 错误:${resp.status}`);
 
-    if (resp.status !== 200) return showError(`HTTP 错误：${resp.status}`);
+    const data = JSON.parse(body);
+    const geo = {
+      ip:      data.ip || "Unknown",
+      city:    data.city || "",
+      country: data.country || data.country_code || "",
+      asn:     data.asn || "",
+      isp:     data.isp || data.organization || "",
+    };
 
-    const {
-      ip           = "Unknown",
-      country      = "",
-      city         = "",
-      organization = "",
-      asn          = "",
-    } = JSON.parse(body);
-
-    const isp    = organization || "";
-    const parts  = [city, country].filter(Boolean).join(", ");
-    const asnIsp = [asn ? `AS${asn}` : null, isp || null].filter(Boolean).join(" · ");
-
-    const lines = [parts, asnIsp].filter(Boolean);
-
-    $done({
-      title:       ip,
-      content:     lines.join("\n"),
-      icon,
-      "icon-color": iconColor,
-    });
+    $persistentStore.write(JSON.stringify({ geo, at: Date.now() }), CACHE_KEY);
+    done(geo.ip, render(geo));
 
   } catch (e) {
-    showError(e.message || "未知错误");
+    staleFallback(e.message || "未知错误");
   }
 })();
