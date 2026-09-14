@@ -102,11 +102,15 @@
     return { abuse: data.abuseConfidenceScore, reports: data.totalReports || 0 };
   };
 
-  // 相邻同名段只留一个(Seoul, Seoul, South Korea -> Seoul, South Korea)
-  const locationInfo = (geo) => [geo.city, geo.region, geo.country]
-    .filter(Boolean)
-    .filter((part, index, parts) => index === 0 || part.toLowerCase() !== parts[index - 1].toLowerCase())
-    .join(", ");
+  // 只显示 城市主体, 国家:HackMyIP 的 city 可能带回逗号分隔的上层级
+  // ("Hongdae, Mapo-gu, Seoul" -> "Seoul"),region 直接不用
+  const locationInfo = (geo) => {
+    const city = (geo.city || "").split(",").pop().trim();
+    return [city, geo.country]
+      .filter(Boolean)
+      .filter((part, index, parts) => index === 0 || part.toLowerCase() !== parts[index - 1].toLowerCase())
+      .join(", ");
+  };
 
   // 同一品牌的 isp/org 只留更具体的那个(Cloudflare, Inc. + Cloudflare WARP -> Cloudflare WARP)
   const brand = (name) => (name || "").split(/[,\s]/)[0].toLowerCase();
