@@ -33,13 +33,31 @@
       });
     });
 
+  const fetchGeo = async (url) => {
+    const { resp, body } = await fetchWithTimeout(url);
+    if (resp.status !== 200) return null;
+    const data = JSON.parse(body);
+    if (!data.ip) return null;
+    return {
+      ip:      data.ip,
+      city:    data.city || "",
+      country: data.country || data.country_code || "",
+      asn:     data.asn || "",
+      isp:     data.isp || data.organization || "",
+    };
+  };
+
   // 只有两个字段都有才拼 "city, country";否则单出一个,避免残缺分隔符
   const joinCityCountry = (city, country) => [city, country].filter(Boolean).join(", ");
 
-  const render = (geo) => {
+  const render = (ips, geo) => {
+    const addresses = [
+      ips.ipv4 ? `IPv4: ${ips.ipv4}` : null,
+      ips.ipv6 ? `IPv6: ${ips.ipv6}` : null,
+    ];
     const line1 = joinCityCountry(geo.city, geo.country);
     const line2 = [geo.asn ? `AS${geo.asn}` : null, geo.isp].filter(Boolean).join(" · ");
-    return [line1, line2].filter(Boolean).join("\n");
+    return [...addresses, line1, line2].filter(Boolean).join("\n");
   };
 
   // 时间戳只用在失败路径,正常显示与该脚本原行为完全一致
@@ -53,27 +71,24 @@
     let cached = null;
     try { cached = JSON.parse($persistentStore.read(CACHE_KEY) || "null"); } catch (_) {}
     if (cached && cached.geo && cached.at) {
-      return done(cached.geo.ip || "Unknown", `${render(cached.geo)}\n更新于 ${stamp(cached.at)}`, "alert");
+      const ips = cached.ips || { ipv4: cached.geo.ip || "", ipv6: "" };
+      return done(ips.ipv4 || ips.ipv6 || "Unknown", `${render(ips, cached.geo)}\n更新于 ${stamp(cached.at)}`, "alert");
     }
     // ponytail: 首次运行且请求失败时无值可回落,只能裸报错
     return done("查询失败", reason, "error");
   };
 
   try {
-    const { resp, body } = await fetchWithTimeout("https://api.ip.sb/geoip");
-    if (resp.status !== 200) return staleFallback(`HTTP 错误:${resp.status}`);
+    const [ipv4, ipv6] = await Promise.all([
+      fetchGeo("https://api-ipv4.ip.sb/geoip").catch(() => null),
+      fetchGeo("https://api-ipv6.ip.sb/geoip").catch(() => null),
+    ]);
+    if (!ipv4 && !ipv6) return staleFallback("IPv4/IPv6 查询失败");
 
-    const data = JSON.parse(body);
-    const geo = {
-      ip:      data.ip || "Unknown",
-      city:    data.city || "",
-      country: data.country || data.country_code || "",
-      asn:     data.asn || "",
-      isp:     data.isp || data.organization || "",
-    };
-
-    $persistentStore.write(JSON.stringify({ geo, at: Date.now() }), CACHE_KEY);
-    done(geo.ip, render(geo));
+    const ips = { ipv4: ipv4 ? ipv4.ip : "", ipv6: ipv6 ? ipv6.ip : "" };
+    const geo = ipv4 || ipv6;
+    $persistentStore.write(JSON.stringify({ ips, geo, at: Date.now() }), CACHE_KEY);
+    done(ips.ipv4 || ips.ipv6, render(ips, geo));
 
   } catch (e) {
     staleFallback(e.message || "未知错误");

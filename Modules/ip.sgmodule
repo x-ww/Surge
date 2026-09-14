@@ -1,5 +1,5 @@
 #!name=IP Info
-#!desc=Display IP, location, ISP and ASN info
+#!desc=Display IPv4, IPv6, location, ISP and ASN info
 #!category=x-ww
 
 [Script]
