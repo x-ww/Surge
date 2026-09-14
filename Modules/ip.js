@@ -60,7 +60,7 @@
     return [...addresses, line1, line2].filter(Boolean).join("\n");
   };
 
-  // 时间戳只用在失败路径,正常显示与该脚本原行为完全一致
+  // 时间戳只用在失败路径
   const stamp = (ts) => {
     const d = new Date(ts);
     const p = (n) => String(n).padStart(2, "0");
@@ -72,7 +72,7 @@
     try { cached = JSON.parse($persistentStore.read(CACHE_KEY) || "null"); } catch (_) {}
     if (cached && cached.geo && cached.at) {
       const ips = cached.ips || { ipv4: cached.geo.ip || "", ipv6: "" };
-      return done(ips.ipv4 || ips.ipv6 || "Unknown", `${render(ips, cached.geo)}\n更新于 ${stamp(cached.at)}`, "alert");
+      return done("IP 信息", `${render(ips, cached.geo)}\n更新于 ${stamp(cached.at)}`, "alert");
     }
     // ponytail: 首次运行且请求失败时无值可回落,只能裸报错
     return done("查询失败", reason, "error");
@@ -88,7 +88,7 @@
     const ips = { ipv4: ipv4 ? ipv4.ip : "", ipv6: ipv6 ? ipv6.ip : "" };
     const geo = ipv4 || ipv6;
     $persistentStore.write(JSON.stringify({ ips, geo, at: Date.now() }), CACHE_KEY);
-    done(ips.ipv4 || ips.ipv6, render(ips, geo));
+    done("IP 信息", render(ips, geo));
 
   } catch (e) {
     staleFallback(e.message || "未知错误");
