@@ -1,10 +1,10 @@
 #!name=IP Info
-#!desc=Display IPv4, IPv6, location, ISP and ASN info
+#!desc=Display IP address, location, ISP, ASN and IP quality
 #!category=x-ww
 #!author=x-ww
 #!homepage=https://github.com/x-ww/Surge
 #!arguments=abuseipdb_key
-#!arguments-desc=可选:填入 AbuseIPDB API key 后,IPv4/IPv6 各自显示真实信誉分(免费 1000 次/天)。留空则只显示基础信息。
+#!arguments-desc=可选:填入 AbuseIPDB API key 后显示所展示地址的真实信誉分(免费 1000 次/天)。留空则只显示基础信息。
 
 [Script]
 IP面板 = type=generic,timeout=10,script-path=https://raw.githubusercontent.com/x-ww/Surge/refs/heads/main/Modules/ip.js,argument="abuseipdb_key={{{abuseipdb_key}}}"

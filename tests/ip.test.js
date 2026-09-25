@@ -6,7 +6,6 @@ const vm = require('vm');
 const source = fs.readFileSync(path.join(__dirname, '..', 'Modules', 'ip.js'), 'utf8');
 const v4 = { ip: '203.0.113.42', city: 'Tokyo', country: 'Japan', asn: 64500, isp: 'Example ISP' };
 const v6 = { ip: '2001:db8::42', city: 'Singapore', country: 'Singapore', asn: 64501, isp: 'Other ISP' };
-const v6SamePlace = { ...v6, city: v4.city, country: v4.country };
 // HackMyIP /api/score scores the caller only; quality is attributed by exact ip match.
 const quality = (ip) => ({ ip, type: 'vpn', score: 82, grade: 'B', is_vpn: true, proxy: false, hosting: false, is_datacenter: false, mobile: false });
 
@@ -24,8 +23,6 @@ function run({ ipv4 = v4, ipv6 = v6, argument = '', cache = null, scoreFor = nul
     $httpClient: {
       get: ({ url }, callback) => setTimeout(() => {
         if (url.includes('api.abuseipdb.com')) {
-          const data = url.includes('2001') || (ipv6 && url.includes(encodeURIComponent(ipv6.ip))) ? ipv6 : ipv4;
-          if (!data) return callback(new Error('offline'));
           const dirty = url.includes(encodeURIComponent(v6.ip)) ? 0 : 16;
           return callback(null, { status: 200 }, JSON.stringify({ data: {
             abuseConfidenceScore: dirty,
@@ -33,14 +30,13 @@ function run({ ipv4 = v4, ipv6 = v6, argument = '', cache = null, scoreFor = nul
           } }));
         }
         if (url.includes('hackmyip.com')) {
-          const caller = scoreFor || ipv6; // /api/score answers for the current caller
+          const caller = scoreFor; // /api/score answers for the current caller, if any
           if (!caller) return callback(new Error('offline'));
           return callback(null, { status: 200 }, JSON.stringify({ success: true, data: {
             ip: caller.ip, privacy: quality(caller.ip),
           }}));
         }
-        const isV6 = url.includes('ipv6');
-        const data = isV6 ? ipv6 : ipv4;
+        const data = url.includes('ipv6') ? ipv6 : ipv4;
         if (!data) return callback(new Error('offline'));
         callback(null, { status: 200 }, JSON.stringify({
           ip: data.ip, city: data.city, country: data.country, asn: data.asn, isp: data.isp,
@@ -65,62 +61,73 @@ function run({ ipv4 = v4, ipv6 = v6, argument = '', cache = null, scoreFor = nul
   return Promise.race([result, guard]).finally(() => clearTimeout(timer));
 }
 
+const lines = (out) => out.content.split('\n');
+
 (async () => {
-  // dual stack; score is attributed to the caller only (v6 here)
-  let output = await run();
-  assert.strictEqual(output.title, v4.ip);
-  assert(output.content.includes(`IPv6: ${v6.ip}`));
-  assert(!output.content.includes(`IPv4: ${v4.ip}`));
-  assert(output.content.includes('v4 Tokyo, Japan'), 'differing locations on own line');
-  assert(output.content.includes('v6 Singapore'), 'differing locations on own line');
-  assert(output.content.includes('v4 AS64500 · Example ISP'));
-  assert(output.content.includes('v6 AS64501 · Other ISP'));
-  // 82/B belongs to v6 (the caller); v4 must not borrow it
-  assert(output.content.includes('v4 代理') === false);
-  assert(output.content.includes('v6 质量 82/B · VPN'), 'score attached to caller only');
-  assert(!output.content.includes('v4 质量'), 'non-caller stack must not receive the score');
+  // v6 is the caller -> it is the one stack shown, labels gone
+  let output = await run({ scoreFor: v6 });
+  assert.strictEqual(output.title, v6.ip);
+  assert(!output.content.includes(v4.ip), 'the other stack must not appear anywhere');
+  assert(!output.content.includes('v4 ') && !output.content.includes('v6 '), 'no stack prefixes');
+  assert.deepStrictEqual(lines(output), ['Singapore', 'AS64501 · Other ISP', '质量 82/B · VPN'], 'exactly one stack rendered');
+  assert.strictEqual(output.style, undefined, 'success must not pass style (keeps icon possible)');
 
-  // score lands on v4 when v4 is the caller
+  // score follows the caller even when IPv4 is the more obvious choice
+  output = await run({ scoreFor: v6 });
+  assert.strictEqual(output.title, v6.ip, 'scored caller wins over IPv4 preference');
+
+  // v4 is the caller -> IPv4 shown, v6 never borrows the score
   output = await run({ scoreFor: v4 });
-  assert(output.content.includes('v4 质量 82/B · VPN'), 'v4 caller gets score');
-  assert(!output.content.includes('v6 质量'), 'v6 must not borrow v4 score');
+  assert.strictEqual(output.title, v4.ip);
+  assert.deepStrictEqual(lines(output), ['Tokyo, Japan', 'AS64500 · Example ISP', '质量 82/B · VPN']);
+  assert(!output.content.includes(v6.ip));
 
-  // no AbuseIPDB key -> no reputation
+  // no score endpoint (blocked/offline) -> IPv4 is the default stack, no quality line
   output = await run();
-  assert(!output.content.includes('信誉'), 'reputation must be absent without a key');
+  assert.strictEqual(output.title, v4.ip, 'no score available -> IPv4 preferred');
+  assert.deepStrictEqual(lines(output), ['Tokyo, Japan', 'AS64500 · Example ISP'], 'no empty/placeholder line');
 
-  // key present -> both stacks scored per address
-  output = await run({ argument: 'abuseipdb_key=test-key' });
-  assert(output.content.includes('v4 质量 82/B · VPN · 信誉 84（举报 12）') || output.content.includes('信誉 84（举报 12）'), 'v4 reputation missing');
-  assert(output.content.includes('v6') && output.content.includes('信誉 100'), 'v6 reputation missing');
-
-  // IPv4 only
+  // single-stack environments
   output = await run({ ipv6: null, scoreFor: v4 });
   assert.strictEqual(output.title, v4.ip);
-  assert(!output.content.includes('IPv6:'));
-  assert(!output.content.includes('v4 '), 'single-stack output must not be prefixed');
-  assert(output.content.includes('质量 82/B · VPN'));
+  output = await run({ ipv4: null, scoreFor: v6 });
+  assert.strictEqual(output.title, v6.ip);
 
-  // identical stacks merge onto shared lines (location & network collapse; status may differ
-  // because only the scored caller has quality)
-  output = await run({ ipv6: v6SamePlace, scoreFor: v4 });
-  assert(!output.content.includes('v4 Tokyo'), 'equal locations must collapse without prefixes');
-  assert(output.content.includes('Tokyo, Japan'));
-  assert(output.content.includes('v4 质量 82/B · VPN'), 'differing status stays prefixed');
+  // no AbuseIPDB key -> no reputation line
+  output = await run({ scoreFor: v4 });
+  assert(!output.content.includes('信誉'), 'reputation must be absent without a key');
+
+  // key present -> reputation for the shown address only
+  output = await run({ argument: 'abuseipdb_key=test-key', scoreFor: v4 });
+  assert(lines(output).some(l => l.includes('信誉 84(举报 12)')), 'v4 reputation missing');
+  output = await run({ argument: 'abuseipdb_key=test-key', scoreFor: v6 });
+  assert(lines(output).some(l => l.includes('信誉 100')), 'v6 reputation missing');
+  assert(!output.content.includes('举报 12'), 'only the shown address is queried');
 
   // bad argument encoding must not crash
-  output = await run({ argument: '%E0%A4%A' });
+  output = await run({ argument: '%E0%A4%A', scoreFor: v4 });
   assert.strictEqual(output.title, v4.ip);
 
-  // total failure falls back to cache with alert style
+  // total failure falls back to the cached single stack with alert style
   output = await run({
-    ipv4: null,
-    ipv6: null,
-    cache: { ips: { ipv4: v4.ip, ipv6: v6.ip }, geo4: v4, geo6: v6, at: Date.now() },
+    ipv4: null, ipv6: null,
+    cache: { ip: v6.ip, geo: { ...v6, quality: quality(v6.ip) }, at: Date.now() },
   });
-  assert.strictEqual(output.title, v4.ip);
-  assert(output.content.includes(`IPv6: ${v6.ip}`));
+  assert.strictEqual(output.title, v6.ip);
+  assert(output.content.includes('质量 82/B · VPN') && output.content.includes('更新于'));
   assert.strictEqual(output.style, 'alert');
+
+  // a cache written by the previous dual-stack build still renders
+  output = await run({
+    ipv4: null, ipv6: null,
+    cache: { geo4: v4, geo6: v6, at: Date.now() },
+  });
+  assert.strictEqual(output.title, v4.ip, 'old cache shape still usable');
+  assert.strictEqual(output.style, 'alert');
+
+  // first run + total failure -> bare error when nothing is cached
+  output = await run({ ipv4: null, ipv6: null });
+  assert.strictEqual(output.style, 'error');
 
   console.log('ip.js self-check: PASS');
 })().catch(error => {

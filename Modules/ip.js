@@ -1,11 +1,11 @@
 (async () => {
-  // 数据链路(最小化):
-  //   ip.sb api-ipv4/api-ipv6 -> 各栈地址 + 位置 + ASN/ISP(geoip 自带,不再逐地址二次查询)
-  //   HackMyIP /api/score     -> 只给"当前调用者"打质量分/类型,按 IP 匹配后才归属,绝不张冠李戴
-  //   AbuseIPDB(可选)         -> 各栈信誉分,需要模块参数 abuseipdb_key
-  // 任一栈失败不拖累另一栈;全失败回退上次缓存并标 alert。
+  // 数据链路(单栈展示):
+  //   ip.sb api-ipv4/api-ipv6 -> 两栈地址 + 位置 + ASN/ISP(geoip 自带,不再逐地址二次查询)
+  //   HackMyIP /api/score     -> 只给"当前调用者"打质量分/类型,IP 对得上才采用,绝不张冠李戴
+  //   AbuseIPDB(可选)         -> 所展示地址的信誉分,需要模块参数 abuseipdb_key
+  // 两栈仍各查一次(单栈环境可用,且质量分只认出口地址,不查就丢),但面板只展示一个:
+  // 能对上质量分的那栈优先(否则分就丢了),再退回 IPv4 / IPv6。全失败回退上次缓存并标 alert。
   const CACHE_KEY = "x-ww.ip-panel.last";
-  const LEGACY_CACHE_KEY = "ip-panel-last";
 
   const decode = (value) => {
     try { return decodeURIComponent(value); } catch (_) { return value; }
@@ -92,7 +92,7 @@
 
   // 质量 + 类型 + 信誉合成一行;缺的段直接不出现
   const statusText = (geo) => {
-    const q = geo.quality || geo.privacy; // 兼容旧缓存里的 privacy
+    const q = geo.quality;
     const parts = [];
     if (q && q.score !== "") parts.push(`质量 ${q.score}${q.grade ? `/${q.grade}` : ""}`);
     if (q) {
@@ -107,43 +107,22 @@
       ].filter(Boolean))].join(" · ");
       if (flags) parts.push(flags);
     }
-    if (geo.reputation) parts.push(`信誉 ${100 - geo.reputation.abuse}${geo.reputation.reports ? `（举报 ${geo.reputation.reports}）` : ""}`);
+    if (geo.reputation) parts.push(`信誉 ${100 - geo.reputation.abuse}${geo.reputation.reports ? `(举报 ${geo.reputation.reports})` : ""}`);
     return parts.join(" · ");
   };
 
-  const render = (ips, geo4, geo6) => {
-    const families = [
-      { label: "IPv4", short: "v4", ip: ips.ipv4, geo: geo4 },
-      { label: "IPv6", short: "v6", ip: ips.ipv6, geo: geo6 },
-    ].filter(item => item.ip && item.geo);
-    if (!families.length) return "";
+  const render = (geo) => [locationInfo(geo), networkInfo(geo), statusText(geo)]
+    .filter(Boolean)
+    .join("\n");
 
-    // 各栈相同就一行;有差异才每栈各占一行(v4/v6 前缀)
-    const merge = (values) => {
-      const shown = values.filter(Boolean);
-      if (!shown.length) return [];
-      const uniform = shown.length === values.length && shown.every(value => value === shown[0]);
-      if (uniform) return [shown[0]];
-      return values.map((value, index) => (value ? `${families[index].short} ${value}` : null)).filter(Boolean);
-    };
-
-    // 标题已经是主 IP,正文只列另一栈
-    const primaryLabel = ips.ipv4 ? "IPv4" : "IPv6";
-    const lines = families.filter(item => item.label !== primaryLabel).map(item => `${item.label}: ${item.ip}`);
-
-    [locationInfo, networkInfo, statusText].forEach((field) => {
-      merge(families.map(item => field(item.geo))).forEach(line => lines.push(line));
-    });
-    return lines.join("\n");
+  // 只展示一个栈:质量分只属于当前出口,对得上就用它,否则退回 IPv4
+  const pickPrimary = (geo4, geo6, quality) => {
+    if (quality) {
+      if (geo4 && geo4.ip === quality.ip) return geo4;
+      if (geo6 && geo6.ip === quality.ip) return geo6;
+    }
+    return geo4 || geo6;
   };
-
-  const cachedData = (cached) => ({
-    ips: cached.ips || { ipv4: cached.geo && cached.geo.ip || "", ipv6: "" },
-    geo4: cached.geo4 || cached.geo || null,
-    geo6: cached.geo6 || null,
-  });
-
-  const primaryIp = (ips) => ips.ipv4 || ips.ipv6 || "Unknown";
 
   const stamp = (ts) => {
     const d = new Date(ts);
@@ -153,14 +132,9 @@
 
   const staleFallback = (reason) => {
     let cached = null;
-    try {
-      const raw = $persistentStore.read(CACHE_KEY) || $persistentStore.read(LEGACY_CACHE_KEY) || "null";
-      cached = JSON.parse(raw);
-    } catch (_) {}
-    if (cached && cached.at && (cached.geo4 || cached.geo6 || cached.geo)) {
-      const data = cachedData(cached);
-      return done(primaryIp(data.ips), `${render(data.ips, data.geo4, data.geo6)}\n更新于 ${stamp(cached.at)}`, "alert");
-    }
+    try { cached = JSON.parse($persistentStore.read(CACHE_KEY) || "null"); } catch (_) {}
+    const geo = cached && (cached.geo || cached.geo4); // 兼容分栈时代的缓存格式
+    if (geo && geo.ip) return done(geo.ip, `${render(geo)}\n更新于 ${stamp(cached.at)}`, "alert");
     // ponytail: 首次运行且请求失败时无值可回落,只能裸报错
     return done("查询失败", reason, "error");
   };
@@ -173,21 +147,15 @@
     ]);
     if (!geo4 && !geo6) return staleFallback("IPv4/IPv6 查询失败");
 
-    // /api/score 只评当前调用出口;IP 对得上谁就归谁
-    if (quality) {
-      if (geo4 && geo4.ip === quality.ip) geo4.quality = quality;
-      if (geo6 && geo6.ip === quality.ip) geo6.quality = quality;
-    }
-    const [rep4, rep6] = await Promise.all([
-      fetchAbuse(geo4 && geo4.ip).catch(() => null),
-      fetchAbuse(geo6 && geo6.ip).catch(() => null),
-    ]);
-    if (geo4 && rep4) geo4.reputation = rep4;
-    if (geo6 && rep6) geo6.reputation = rep6;
+    // /api/score 只评当前调用出口;IP 对得上谁就归谁,对不上就不用
+    const geo = pickPrimary(geo4, geo6, quality);
+    if (quality && quality.ip === geo.ip) geo.quality = quality;
 
-    const ips = { ipv4: geo4 ? geo4.ip : "", ipv6: geo6 ? geo6.ip : "" };
-    $persistentStore.write(JSON.stringify({ ips, geo4, geo6, at: Date.now() }), CACHE_KEY);
-    done(primaryIp(ips), render(ips, geo4, geo6));
+    const rep = await fetchAbuse(geo.ip).catch(() => null);
+    if (rep) geo.reputation = rep;
+
+    $persistentStore.write(JSON.stringify({ ip: geo.ip, geo, at: Date.now() }), CACHE_KEY);
+    done(geo.ip, render(geo));
 
   } catch (e) {
     staleFallback(e.message || "未知错误");
