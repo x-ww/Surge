@@ -24,7 +24,6 @@
     title,
     content,
     ...(style ? { style } : {}),
-    ...(args.icon ? { icon: args.icon, "icon-color": args["icon-color"] || "#5B7FA6" } : {}),
   });
 
   const fetchWithTimeout = (url, timeout = 8000, headers) =>
@@ -54,6 +53,7 @@
     };
   };
 
+  // /api/score 的 privacy 只有 type/score/grade/label/is_vpn/is_datacenter/is_residential
   const fetchQuality = async () => {
     const r = await fetchJson("https://hackmyip.com/api/score");
     const p = r && r.success && r.data && r.data.privacy;
@@ -64,9 +64,7 @@
       grade:       p.grade || "",
       type:        p.type || "",
       vpn:         p.is_vpn === true,
-      proxy:       p.proxy === true,
-      datacenter:  p.is_datacenter === true || p.hosting === true,
-      mobile:      p.mobile === true,
+      datacenter:  p.is_datacenter === true,
       residential: p.is_residential === true,
     };
   };
@@ -100,9 +98,7 @@
       const flags = [...new Set([
         type,
         q.vpn ? "VPN" : null,
-        q.proxy ? "代理" : null,
         q.datacenter ? "数据中心" : null,
-        q.mobile ? "移动网络" : null,
         q.residential ? "住宅" : null,
       ].filter(Boolean))].join(" · ");
       if (flags) parts.push(flags);
@@ -154,7 +150,7 @@
     const rep = await fetchAbuse(geo.ip).catch(() => null);
     if (rep) geo.reputation = rep;
 
-    $persistentStore.write(JSON.stringify({ ip: geo.ip, geo, at: Date.now() }), CACHE_KEY);
+    $persistentStore.write(JSON.stringify({ geo, at: Date.now() }), CACHE_KEY);
     done(geo.ip, render(geo));
 
   } catch (e) {
