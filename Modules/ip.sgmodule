@@ -1,5 +1,5 @@
 #!name=IP Info
-#!desc=Display IP address, location, ISP, ASN and IP quality
+#!desc=Display IP address, location, network type and IP quality
 #!category=x-ww
 #!author=x-ww
 #!homepage=https://github.com/x-ww/Surge

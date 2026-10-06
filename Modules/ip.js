@@ -1,6 +1,6 @@
 (async () => {
   // 数据链路(单栈展示):
-  //   ip.sb api-ipv4/api-ipv6 -> 两栈地址 + 位置 + ASN/ISP(geoip 自带,不再逐地址二次查询)
+  //   ip.sb api-ipv4/api-ipv6 -> 两栈地址 + 位置 + ISP(geoip 自带,不再逐地址二次查询)
   //   HackMyIP /api/score     -> 只给"当前调用者"打质量分/类型,IP 对得上才采用,绝不张冠李戴
   //   AbuseIPDB(可选)         -> 所展示地址的信誉分,需要模块参数 abuseipdb_key
   // 两栈仍各查一次(单栈环境可用,且质量分只认出口地址,不查就丢),但面板只展示一个:
@@ -47,8 +47,7 @@
     return {
       ip:      r.ip,
       city:    r.city || "",
-      country: r.country || r.country_code || "",
-      asn:     r.asn || "",
+      country: r.country_code || r.country || "",
       isp:     r.isp || r.organization || "",
     };
   };
@@ -86,23 +85,21 @@
     .filter((part, index, parts) => index === 0 || part.toLowerCase() !== parts[index - 1].toLowerCase())
     .join(", ");
 
-  const networkInfo = (geo) => [geo.asn ? `AS${geo.asn}` : null, geo.isp].filter(Boolean).join(" · ");
+  // type 和两个 is_* 标可能指向同一类,去重后拼成一行
+  const typeLabel = (q) => {
+    const label = ({ datacenter: "数据中心", residential: "住宅", vpn: "VPN" }[q.type] || q.type);
+    const extra = [q.vpn && "VPN", q.datacenter && "数据中心", q.residential && "住宅"].filter(Boolean);
+    return [...new Set([label, ...extra].filter(Boolean))].join(" · ");
+  };
 
-  // 质量 + 类型 + 信誉合成一行;缺的段直接不出现
+  // 类型 + ISP 合成一行;拿不到质量分就只剩 ISP
+  const networkInfo = (geo) => [geo.quality ? typeLabel(geo.quality) : "", geo.isp].filter(Boolean).join(" · ");
+
+  // 质量 + 信誉合成一行;缺的段直接不出现
   const statusText = (geo) => {
     const q = geo.quality;
     const parts = [];
     if (q && q.score !== "") parts.push(`质量 ${q.score}${q.grade ? `/${q.grade}` : ""}`);
-    if (q) {
-      const type = q.type ? ({ datacenter: "数据中心", residential: "住宅", vpn: "VPN" }[q.type] || q.type) : null;
-      const flags = [...new Set([
-        type,
-        q.vpn ? "VPN" : null,
-        q.datacenter ? "数据中心" : null,
-        q.residential ? "住宅" : null,
-      ].filter(Boolean))].join(" · ");
-      if (flags) parts.push(flags);
-    }
     if (geo.reputation) parts.push(`信誉 ${100 - geo.reputation.abuse}${geo.reputation.reports ? `(举报 ${geo.reputation.reports})` : ""}`);
     return parts.join(" · ");
   };
