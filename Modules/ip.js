@@ -104,29 +104,7 @@
     return parts.join(" · ");
   };
 
-  // 两位国家码 -> 国旗 emoji(CN -> 🇨🇳);码不全或不是两位就不出旗
-  const flagOf = (cc) => cc && cc.length === 2
-    ? cc.toUpperCase().replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt(0)))
-    : "";
-
-  // 标题位是面板唯一的大字,放结论(类型 · ISP),IP 降到正文;
-  // 回落到直接展示 IP 时,国旗贴 IP 左侧
-  const titleOf = (geo) => {
-    const info = networkInfo(geo);
-    if (info) return info;
-    const flag = flagOf(geo.country);
-    return flag ? `${flag} ${geo.ip}` : geo.ip;
-  };
-
-  // good=住宅干净 / alert=数据中心·VPN 出口 / info=无从判定 / error=查询失败
-  const styleOf = (geo) => {
-    const q = geo.quality;
-    if (!q) return "info";
-    if (q.vpn || q.datacenter) return "alert";
-    return q.residential ? "good" : "info";
-  };
-
-  const render = (geo) => [geo.ip, locationInfo(geo), statusText(geo)]
+  const render = (geo) => [locationInfo(geo), networkInfo(geo), statusText(geo)]
     .filter(Boolean)
     .join("\n");
 
@@ -149,7 +127,7 @@
     let cached = null;
     try { cached = JSON.parse($persistentStore.read(CACHE_KEY) || "null"); } catch (_) {}
     const geo = cached && (cached.geo || cached.geo4); // 兼容分栈时代的缓存格式
-    if (geo && geo.ip) return done(titleOf(geo), `${render(geo)}\n更新于 ${stamp(cached.at)}`, "info");
+    if (geo && geo.ip) return done(geo.ip, `${render(geo)}\n更新于 ${stamp(cached.at)}`, "alert");
     // ponytail: 首次运行且请求失败时无值可回落,只能裸报错
     return done("查询失败", reason, "error");
   };
@@ -170,7 +148,7 @@
     if (rep) geo.reputation = rep;
 
     $persistentStore.write(JSON.stringify({ geo, at: Date.now() }), CACHE_KEY);
-    done(titleOf(geo), render(geo), styleOf(geo));
+    done(geo.ip, render(geo));
 
   } catch (e) {
     staleFallback(e.message || "未知错误");
