@@ -7,8 +7,18 @@ services:
     # image: my-snell:v6
     container_name: snell
     restart: unless-stopped
-    ports:
-      - "6160:6160/tcp"
-      - "6160:6160/udp"
+    # host 模式：随机端口直接占用宿主机端口，无需做端口映射
+    network_mode: host
+    environment:
+      # 留空则首次启动自动生成随机端口和随机 PSK（去日志里看）；
+      # 想固定就填上，例如 SNELL_PORT=6160
+      - SNELL_PORT=
+      - SNELL_PSK=
     volumes:
-      - ./snell-server.conf:/app/snell-server.conf:ro
+      # 持久化自动生成的配置：重启不变；删除该卷后下次启动重新生成
+      - snell-data:/app/data
+      # 使用自己的配置文件（二选一，会覆盖自动生成）：
+      # - ./snell-server.conf:/app/snell-server.conf:ro
+
+volumes:
+  snell-data:
