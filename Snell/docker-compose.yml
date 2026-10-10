@@ -2,9 +2,6 @@ services:
   snell:
     # 预构建镜像（推荐）：GitHub Actions 自动构建并推送到 GHCR，无需本地构建
     image: ghcr.io/x-ww/snell:6
-    # 本地构建（二选一：把上面 image 注释掉，打开下面两行）
-    # build: .
-    # image: my-snell:v6
     container_name: snell
     restart: unless-stopped
     # host 模式：随机端口直接占用宿主机端口，无需做端口映射
