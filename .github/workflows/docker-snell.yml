@@ -9,7 +9,7 @@ on:
       - 'Snell/**'
       - '.github/workflows/docker-snell.yml'
   schedule:
-    - cron: '0 3 * * 0'  # 每周日 03:00 UTC 检查官方是否有新版
+    - cron: '0 3 * * *'  # 每天 03:00 UTC 检查官方是否有新版
   workflow_dispatch:
     inputs:
       snell_version:
