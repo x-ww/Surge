@@ -38,6 +38,8 @@ RUN set -e; \
     chmod +x /app/snell-server; \
     /app/snell-server -v
 
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
 WORKDIR /app
-ENTRYPOINT ["/app/snell-server"]
-CMD ["-c", "/app/snell-server.conf"]
+ENTRYPOINT ["/app/entrypoint.sh"]
