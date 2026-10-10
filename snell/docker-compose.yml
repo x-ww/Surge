@@ -1,0 +1,11 @@
+services:
+  snell:
+    build: .
+    image: my-snell:v6
+    container_name: snell
+    restart: unless-stopped
+    ports:
+      - "6160:6160/tcp"
+      - "6160:6160/udp"
+    volumes:
+      - ./snell-server.conf:/app/snell-server.conf:ro
