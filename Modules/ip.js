@@ -45,10 +45,11 @@
     const r = await fetchJson(url);
     if (!r || !r.ip) return null;
     return {
-      ip:      r.ip,
-      city:    r.city || "",
-      country: r.country_code || r.country || "",
-      isp:     r.isp || r.organization || "",
+      ip:           r.ip,
+      city:         r.city || "",
+      country:      r.country || r.country_code || "",
+      country_code: r.country_code || "",
+      isp:          r.isp || r.organization || "",
     };
   };
 
@@ -104,6 +105,16 @@
     return parts.join(" · ");
   };
 
+  // country_code (如 US) -> 国旗 emoji；非二位字母码返回空
+  const flag = (cc) => /^[A-Za-z]{2}$/.test(cc || "")
+    ? String.fromCodePoint(...[...cc.toUpperCase()].map(c => 0x1F1E6 + c.charCodeAt(0) - 65))
+    : "";
+
+  const panelTitle = (geo) => {
+    const f = flag(geo.country_code);
+    return f ? `${f} ${geo.ip}` : geo.ip;
+  };
+
   const render = (geo) => [locationInfo(geo), networkInfo(geo), statusText(geo)]
     .filter(Boolean)
     .join("\n");
@@ -127,7 +138,7 @@
     let cached = null;
     try { cached = JSON.parse($persistentStore.read(CACHE_KEY) || "null"); } catch (_) {}
     const geo = cached && (cached.geo || cached.geo4); // 兼容分栈时代的缓存格式
-    if (geo && geo.ip) return done(geo.ip, `${render(geo)}\n更新于 ${stamp(cached.at)}`, "alert");
+    if (geo && geo.ip) return done(panelTitle(geo), `${render(geo)}\n更新于 ${stamp(cached.at)}`, "alert");
     // ponytail: 首次运行且请求失败时无值可回落,只能裸报错
     return done("查询失败", reason, "error");
   };
@@ -148,7 +159,7 @@
     if (rep) geo.reputation = rep;
 
     $persistentStore.write(JSON.stringify({ geo, at: Date.now() }), CACHE_KEY);
-    done(geo.ip, render(geo));
+    done(panelTitle(geo), render(geo));
 
   } catch (e) {
     staleFallback(e.message || "未知错误");
