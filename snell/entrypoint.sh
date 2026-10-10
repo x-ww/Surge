@@ -23,6 +23,7 @@ else
       echo "listen = 0.0.0.0:$PORT"
       echo "psk = $PSK"
       echo "mode = default"
+      echo "dns = 8.8.8.8, 1.1.1.1"
       echo "dns-ip-preference = default"
     } > "$CONF"
     echo "==> 已生成随机配置（保存在数据卷中，重启不会变）"
