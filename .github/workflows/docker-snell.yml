@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'snell/**'
+      - 'Snell/**'
       - '.github/workflows/docker-snell.yml'
   schedule:
     - cron: '0 3 * * 0'  # 每周日 03:00 UTC 检查官方是否有新版
@@ -86,7 +86,7 @@ jobs:
         if: github.event_name != 'schedule' || steps.check.outputs.exists != 'true'
         uses: docker/build-push-action@v6
         with:
-          context: ./snell
+          context: ./Snell
           platforms: linux/amd64,linux/arm64
           push: true
           build-args: |
