@@ -49,6 +49,7 @@
       city:         r.city || "",
       country:      r.country || r.country_code || "",
       country_code: r.country_code || "",
+      asn:          typeof r.asn === "number" ? r.asn : null,
       isp:          r.isp || r.organization || "",
     };
   };
@@ -93,14 +94,18 @@
     return [...new Set([label, ...extra].filter(Boolean))].join(" · ");
   };
 
-  // 类型 + ISP 合成一行;拿不到质量分就只剩 ISP
-  const networkInfo = (geo) => [geo.quality ? typeLabel(geo.quality) : "", geo.isp].filter(Boolean).join(" · ");
+  // ASN + ISP 合成一行;拿不到 ASN 就只剩 ISP
+  const networkInfo = (geo) => [geo.asn ? `AS${geo.asn}` : "", geo.isp].filter(Boolean).join(" · ");
 
-  // 质量 + 信誉合成一行;缺的段直接不出现
+  // 类型 + 质量 + 信誉合成一行;缺的段直接不出现
   const statusText = (geo) => {
     const q = geo.quality;
     const parts = [];
-    if (q && q.score !== "") parts.push(`质量 ${q.score}${q.grade ? `/${q.grade}` : ""}`);
+    if (q) {
+      const t = typeLabel(q);
+      if (t) parts.push(t);
+      if (q.score !== "") parts.push(`质量 ${q.score}${q.grade ? `/${q.grade}` : ""}`);
+    }
     if (geo.reputation) parts.push(`信誉 ${100 - geo.reputation.abuse}${geo.reputation.reports ? `(举报 ${geo.reputation.reports})` : ""}`);
     return parts.join(" · ");
   };
