@@ -1,0 +1,6 @@
+[snell-server]
+listen = 0.0.0.0:6160
+psk = CHANGE_ME
+mode = default
+dns = 8.8.8.8, 1.1.1.1
+dns-ip-preference = default
