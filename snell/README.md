@@ -2,31 +2,36 @@
 
 从官方二进制（dl.nssurge.com）构建的 Snell Server Docker 镜像，支持 amd64 / arm64。
 
-## 文件
+## 开箱即用：自动生成随机端口和 PSK
 
-- `Dockerfile` — 构建镜像。不指定版本时自动解析官方最新 v6（正式版优先）；用 `--build-arg SNELL_VERSION=` 锁定版本；目标架构自动识别（buildx 的 TARGETARCH）
-- `docker-compose.yml` — 启动服务，默认使用 GHCR 预构建镜像
-- `snell-server.conf.example` — 配置示例，复制为 `snell-server.conf` 后填入自己的密钥（`.gitignore` 已忽略该文件，不会误提交密钥）
-- `../.github/workflows/docker-snell.yml` — GitHub Actions 自动构建：`snell/` 目录有改动、每周定时检查、手动触发，都会构建多架构镜像并推送到 GHCR（`ghcr.io/x-ww/snell`）
-
-## 使用（推荐：GHCR 镜像，无需本地构建）
+**无需任何配置**，直接启动即可：
 
 ```bash
-# 1. 生成密钥
-openssl rand -hex 16
-
-# 2. 复制配置并填入密钥
-cp snell-server.conf.example snell-server.conf
-# 编辑 snell-server.conf，把 psk 换成上一步生成的密钥
-
-# 3. 拉取并启动（需等 Actions 首次构建完成；镜像公开后无需登录）
-docker compose pull && docker compose up -d
-
-# 4. 看日志确认
-docker compose logs snell
+docker compose up -d
 ```
 
-> 首次推送后，去 GHCR 的 package 页面把可见性改成 Public，否则服务器上 `pull` 需要先 `docker login ghcr.io`。
+首次启动时自动生成随机端口（20000–60000）和随机 32 位 PSK，打印在日志里：
+
+```bash
+docker compose logs snell
+# ==>
+# ==> 端口: 32903
+# ==> PSK: 5LKCFeKlofDwIqD8NGwPoeEdZmfu4K06
+# ==> Surge 客户端: snell, 服务器IP, 32903, psk=5LKCFeKlofDwIqD8NGwPoeEdZmfu4K06, version=6, mode=default, reuse=true
+```
+
+- 生成的配置保存在数据卷中，**重启不会变**
+- 想重新生成：`docker compose down -v` 后再 `up -d`
+- 想固定端口/PSK：在 `docker-compose.yml` 的 environment 里填 `SNELL_PORT` / `SNELL_PSK`
+- 想完全自己写配置：把 `snell-server.conf.example` 复制为 `snell-server.conf`，取消 compose 里那组 volumes 注释挂载进去（手动配置优先于自动生成）
+
+## 文件
+
+- `Dockerfile` — 构建镜像。不指定版本时自动解析官方最新 v6（正式版优先）；`--build-arg SNELL_VERSION=` 锁定版本；架构自动识别
+- `entrypoint.sh` — 启动脚本：生成/加载配置，打印端口、PSK 和现成的 Surge 客户端配置行
+- `docker-compose.yml` — 服务定义（host 网络模式 + 数据卷持久化配置）
+- `snell-server.conf.example` — 手动配置示例
+- `../.github/workflows/docker-snell.yml` — GitHub Actions 自动构建多架构镜像并推送 GHCR（`ghcr.io/x-ww/snell`）
 
 ## 本地构建（不用 GHCR 时）
 
@@ -45,9 +50,11 @@ docker compose up -d --build
 ## Surge 客户端配置
 
 ```
-myserver = snell, 服务器IP, 6160, psk=你的密钥, version=6, mode=default, reuse=true
+myserver = snell, 服务器IP, 端口, psk=密钥, version=6, mode=default, reuse=true
 ```
+（端口和密钥从 `docker compose logs snell` 里抄）
 
 注意：
 - v6 的 `mode` 服务端和客户端必须一致（default / unshaped / unsafe-raw）
-- 云服务器安全组/防火墙放行 6160 的 TCP 和 UDP
+- 使用 host 网络模式：端口直接占用宿主机端口，无需映射；Mac 的 Docker Desktop 不支持 host 模式（Linux 服务器没问题）
+- 云服务器防火墙放行实际使用的端口（TCP 和 UDP）
