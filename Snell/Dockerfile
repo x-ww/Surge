@@ -22,7 +22,7 @@ RUN set -e; \
     esac; \
     [ -n "$SA" ] || { echo "ERROR: 无法确定目标架构"; exit 1; }; \
     if [ -z "$SNELL_VERSION" ]; then \
-      VERSIONS=$(curl -sL --max-time 20 https://kb.nssurge.com/surge-knowledge-base/release-notes/snell.md \
+      VERSIONS=$(curl -fsSL --max-time 20 https://kb.nssurge.com/surge-knowledge-base/release-notes/snell.md \
         | grep -oE "snell-server-v[0-9][0-9a-z.]*-linux-${SA}\\.zip" \
         | sed -E 's/^snell-server-v//; s/-linux-.*$//' \
         | grep -E '^6\.' | sort -u); \
@@ -31,7 +31,7 @@ RUN set -e; \
     fi; \
     [ -n "$SNELL_VERSION" ] || { echo "ERROR: 无法解析 Snell 版本"; exit 1; }; \
     echo "==> Snell version: $SNELL_VERSION ($SA)"; \
-    curl -sL --max-time 60 -o /tmp/snell.zip \
+    curl -fsSL --max-time 60 -o /tmp/snell.zip \
       "https://dl.nssurge.com/snell/snell-server-v${SNELL_VERSION}-linux-${SA}.zip"; \
     unzip /tmp/snell.zip -d /app; \
     rm /tmp/snell.zip; \
