@@ -1,55 +1,45 @@
-FROM debian:stable-slim
+# 下载层：curl/unzip 只在这里用，不进最终镜像
+FROM debian:stable-slim AS download
 
-# SNELL_VERSION 为空时，构建时自动解析官方最新 v6 版本；
-# 也可指定具体版本锁定，如 6.0.0rc2 / 5.0.1
+# SNELL_VERSION 为空时自动解析官方最新 v6；也可锁定具体版本，如 6.0.0rc2 / 5.0.1
 ARG SNELL_VERSION=
-# buildx 自动传入目标架构（amd64 / arm64 / ...）
+# buildx 自动传入目标架构；手动 docker build 时回退到本机架构
 ARG TARGETARCH
 
+# 工具层与版本层分开写，Snell 升版时 apt 那层还能命中缓存（QEMU 下 arm64 装包很慢）
 RUN apt-get update \
- && apt-get install -y --no-install-recommends unzip ca-certificates curl \
- && rm -rf /var/lib/apt/lists
+ && apt-get install -y --no-install-recommends ca-certificates curl unzip \
+ && rm -rf /var/lib/apt/lists/*
 
-# 官方下载包的架构命名与 TARGETARCH 不完全一致，先做映射；
-# 再从官方 release notes 页面提取该架构的所有 v6 版本号，
-# 取最新版（beta 和正式版一视同仁，只看新旧）
+COPY resolve-version.sh /tmp/resolve-version.sh
+
+# 官方包名的架构后缀与 TARGETARCH 不同，先归一化（v6 只发 aarch64/amd64/i386，没有 armv7l）
 RUN set -e; \
-    case "$TARGETARCH" in \
-      arm64) SA=aarch64 ;; \
-      arm/v7|armv7) SA=armv7l ;; \
-      386|i386) SA=i386 ;; \
-      *) SA="$TARGETARCH" ;; \
+    case "${TARGETARCH:-$(uname -m)}" in \
+      arm64|aarch64) SA=aarch64 ;; \
+      386|i386|i686) SA=i386 ;; \
+      amd64|x86_64) SA=amd64 ;; \
+      *) echo "ERROR: 官方无 '$TARGETARCH' 的 Snell 构建"; exit 1 ;; \
     esac; \
-    [ -n "$SA" ] || { echo "ERROR: 无法确定目标架构"; exit 1; }; \
     if [ -z "$SNELL_VERSION" ]; then \
-      VERSIONS=$(curl -fsSL --max-time 20 https://kb.nssurge.com/surge-knowledge-base/release-notes/snell.md \
-        | grep -oE "snell-server-v[0-9][0-9a-z.]*-linux-${SA}\\.zip" \
-        | sed -E 's/^snell-server-v//; s/-linux-.*$//' \
-        | grep -E '^6\.' | sort -u); \
-      STABLE=$(echo "$VERSIONS" | grep -E '^[0-9.]+$' | sort -V | tail -1); \
-      PRE=$(echo "$VERSIONS" | grep -E '[^0-9.]' | sort -V | tail -1); \
-      SNELL_VERSION="$STABLE"; \
-      if [ -n "$PRE" ]; then \
-        PRE_BASE=$(echo "$PRE" | sed -E 's/[^0-9.].*//'); \
-        if [ -z "$STABLE" ]; then \
-          SNELL_VERSION="$PRE"; \
-        else \
-          NEWER=$(printf '%s\n%s\n' "$PRE_BASE" "$STABLE" | sort -V | tail -1); \
-          if [ "$NEWER" = "$PRE_BASE" ] && [ "$PRE_BASE" != "$STABLE" ]; then \
-            SNELL_VERSION="$PRE"; \
-          fi; \
-        fi; \
-      fi; \
+      SNELL_VERSION=$(sh /tmp/resolve-version.sh "$SA"); \
     fi; \
-    [ -n "$SNELL_VERSION" ] || { echo "ERROR: 无法解析 Snell 版本"; exit 1; }; \
+    [ -n "$SNELL_VERSION" ] || { echo "ERROR: 无法确定 Snell 版本"; exit 1; }; \
     echo "==> Snell version: $SNELL_VERSION ($SA)"; \
     curl -fsSL --max-time 60 -o /tmp/snell.zip \
       "https://dl.nssurge.com/snell/snell-server-v${SNELL_VERSION}-linux-${SA}.zip"; \
-    unzip /tmp/snell.zip -d /app; \
+    unzip /tmp/snell.zip -d /srv; \
     rm /tmp/snell.zip; \
-    chmod +x /app/snell-server; \
-    /app/snell-server -v
+    chmod +x /srv/snell-server; \
+    /srv/snell-server -v
 
+FROM debian:stable-slim
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+
+COPY --from=download /srv/ /app/
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
