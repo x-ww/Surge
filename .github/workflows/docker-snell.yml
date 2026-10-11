@@ -28,32 +28,17 @@ jobs:
 
       - name: 解析 Snell 版本
         id: version
+        env:
+          PIN: ${{ inputs.snell_version }}
         run: |
-          PINNED=false
-          if [ -n "${{ inputs.snell_version }}" ]; then
-            V="${{ inputs.snell_version }}"
+          if [ -n "$PIN" ]; then
+            V="$PIN"
             PINNED=true
           else
-            VERSIONS=$(curl -fsSL --max-time 20 https://kb.nssurge.com/surge-knowledge-base/release-notes/snell.md \
-              | grep -oE 'snell-server-v[0-9][0-9a-z.]*-linux-amd64\.zip' \
-              | sed -E 's/^snell-server-v//; s/-linux-.*$//' \
-              | grep -E '^6\.' | sort -u)
-            STABLE=$(echo "$VERSIONS" | grep -E '^[0-9.]+$' | sort -V | tail -1)
-            PRE=$(echo "$VERSIONS" | grep -E '[^0-9.]' | sort -V | tail -1)
-            V="$STABLE"
-            if [ -n "$PRE" ]; then
-              PRE_BASE=$(echo "$PRE" | sed -E 's/[^0-9.].*//')
-              if [ -z "$STABLE" ]; then
-                V="$PRE"
-              else
-                NEWER=$(printf '%s\n%s\n' "$PRE_BASE" "$STABLE" | sort -V | tail -1)
-                if [ "$NEWER" = "$PRE_BASE" ] && [ "$PRE_BASE" != "$STABLE" ]; then
-                  V="$PRE"
-                fi
-              fi
-            fi
+            # 与 Dockerfile 共用同一个解析脚本，避免两处逻辑跑偏
+            V=$(sh Snell/resolve-version.sh amd64)
+            PINNED=false
           fi
-          [ -n "$V" ] || { echo "无法解析 Snell 版本"; exit 1; }
           echo "version=$V" >> "$GITHUB_OUTPUT"
           echo "pinned=$PINNED" >> "$GITHUB_OUTPUT"
           echo "Snell version: $V (pinned=$PINNED)"
