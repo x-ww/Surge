@@ -144,7 +144,7 @@
     try { cached = JSON.parse($persistentStore.read(CACHE_KEY) || "null"); } catch (_) {}
     const geo = cached && (cached.geo || cached.geo4); // 兼容分栈时代的缓存格式
     if (geo && geo.ip) return done(panelTitle(geo), `${render(geo)}\n更新于 ${stamp(cached.at)}`, "alert");
-    // ponytail: 首次运行且请求失败时无值可回落,只能裸报错
+    // 首次运行且请求失败时无值可回落,只能裸报错
     return done("查询失败", reason, "error");
   };
 
