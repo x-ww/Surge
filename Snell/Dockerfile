@@ -12,7 +12,7 @@ RUN apt-get update \
 
 # 官方下载包的架构命名与 TARGETARCH 不完全一致，先做映射；
 # 再从官方 release notes 页面提取该架构的所有 v6 版本号，
-# 优先选正式版（纯数字），没有正式版才选最新的 rc/beta
+# 取最新版（beta 和正式版一视同仁，只看新旧）
 RUN set -e; \
     case "$TARGETARCH" in \
       arm64) SA=aarch64 ;; \
@@ -26,8 +26,20 @@ RUN set -e; \
         | grep -oE "snell-server-v[0-9][0-9a-z.]*-linux-${SA}\\.zip" \
         | sed -E 's/^snell-server-v//; s/-linux-.*$//' \
         | grep -E '^6\.' | sort -u); \
-      SNELL_VERSION=$(echo "$VERSIONS" | grep -E '^[0-9.]+$' | sort -V | tail -1); \
-      [ -n "$SNELL_VERSION" ] || SNELL_VERSION=$(echo "$VERSIONS" | sort -V | tail -1); \
+      STABLE=$(echo "$VERSIONS" | grep -E '^[0-9.]+$' | sort -V | tail -1); \
+      PRE=$(echo "$VERSIONS" | grep -E '[^0-9.]' | sort -V | tail -1); \
+      SNELL_VERSION="$STABLE"; \
+      if [ -n "$PRE" ]; then \
+        PRE_BASE=$(echo "$PRE" | sed -E 's/[^0-9.].*//'); \
+        if [ -z "$STABLE" ]; then \
+          SNELL_VERSION="$PRE"; \
+        else \
+          NEWER=$(printf '%s\n%s\n' "$PRE_BASE" "$STABLE" | sort -V | tail -1); \
+          if [ "$NEWER" = "$PRE_BASE" ] && [ "$PRE_BASE" != "$STABLE" ]; then \
+            SNELL_VERSION="$PRE"; \
+          fi; \
+        fi; \
+      fi; \
     fi; \
     [ -n "$SNELL_VERSION" ] || { echo "ERROR: 无法解析 Snell 版本"; exit 1; }; \
     echo "==> Snell version: $SNELL_VERSION ($SA)"; \
