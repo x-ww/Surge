@@ -8,6 +8,7 @@ set -e
 MANUAL_CONF=/app/snell-server.conf
 DATA_DIR=/app/data
 GEN_CONF=$DATA_DIR/snell-server.conf
+AUTO_CONF=false
 
 if [ -f "$MANUAL_CONF" ]; then
   CONF="$MANUAL_CONF"
@@ -15,6 +16,7 @@ if [ -f "$MANUAL_CONF" ]; then
 else
   mkdir -p "$DATA_DIR"
   CONF="$GEN_CONF"
+  AUTO_CONF=true
   if [ ! -f "$CONF" ]; then
     PORT=${SNELL_PORT:-$(shuf -i 20000-60000 -n 1)}
     PSK=${SNELL_PSK:-$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32)}
@@ -32,10 +34,27 @@ else
   fi
 fi
 
-SHOW_PORT=$(sed -n 's/^listen *=.*:\([0-9][0-9]*\).*/\1/p' "$CONF" | head -1)
-SHOW_PSK=$(sed -n 's/^psk *= *//p' "$CONF" | head -1 | tr -d ' \t\r')
-echo "==> 端口: $SHOW_PORT"
-echo "==> PSK: $SHOW_PSK"
-echo "==> Surge 客户端: snell, 服务器IP, $SHOW_PORT, psk=$SHOW_PSK, version=6, mode=default, reuse=true"
+CUR_PORT=$(sed -n 's/^listen *=.*:\([0-9][0-9]*\).*/\1/p' "$CONF" | head -1)
+CUR_PSK=$(sed -n 's/^psk *= *//p' "$CONF" | head -1 | tr -d ' \t\r')
+
+# SNELL_PORT / SNELL_PSK 只在首次生成配置时生效，之后以数据卷里的配置为准
+if [ "$AUTO_CONF" = true ]; then
+  IGNORED=""
+  if [ -n "$SNELL_PORT" ] && [ "$SNELL_PORT" != "$CUR_PORT" ]; then
+    echo "!! 注意: SNELL_PORT=$SNELL_PORT 未生效，数据卷里已固定为 $CUR_PORT"
+    IGNORED=set
+  fi
+  if [ -n "$SNELL_PSK" ] && [ "$SNELL_PSK" != "$CUR_PSK" ]; then
+    echo "!! 注意: SNELL_PSK 未生效，数据卷里已有另一个 PSK"
+    IGNORED=set
+  fi
+  if [ -n "$IGNORED" ]; then
+    echo "!! 要改用新端口/PSK: docker compose down -v 再 up -d（会整套重新生成），或直接挂载配置文件"
+  fi
+fi
+
+echo "==> 端口: $CUR_PORT"
+echo "==> PSK: $CUR_PSK"
+echo "==> Surge 客户端: snell, 服务器IP, $CUR_PORT, psk=$CUR_PSK, version=6, mode=default, reuse=true"
 
 exec /app/snell-server -c "$CONF"
