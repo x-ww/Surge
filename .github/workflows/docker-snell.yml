@@ -38,8 +38,20 @@ jobs:
               | grep -oE 'snell-server-v[0-9][0-9a-z.]*-linux-amd64\.zip' \
               | sed -E 's/^snell-server-v//; s/-linux-.*$//' \
               | grep -E '^6\.' | sort -u)
-            V=$(echo "$VERSIONS" | grep -E '^[0-9.]+$' | sort -V | tail -1)
-            [ -n "$V" ] || V=$(echo "$VERSIONS" | sort -V | tail -1)
+            STABLE=$(echo "$VERSIONS" | grep -E '^[0-9.]+$' | sort -V | tail -1)
+            PRE=$(echo "$VERSIONS" | grep -E '[^0-9.]' | sort -V | tail -1)
+            V="$STABLE"
+            if [ -n "$PRE" ]; then
+              PRE_BASE=$(echo "$PRE" | sed -E 's/[^0-9.].*//')
+              if [ -z "$STABLE" ]; then
+                V="$PRE"
+              else
+                NEWER=$(printf '%s\n%s\n' "$PRE_BASE" "$STABLE" | sort -V | tail -1)
+                if [ "$NEWER" = "$PRE_BASE" ] && [ "$PRE_BASE" != "$STABLE" ]; then
+                  V="$PRE"
+                fi
+              fi
+            fi
           fi
           [ -n "$V" ] || { echo "无法解析 Snell 版本"; exit 1; }
           echo "version=$V" >> "$GITHUB_OUTPUT"
