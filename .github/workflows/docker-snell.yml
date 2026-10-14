@@ -6,6 +6,8 @@ on:
     paths:
       - 'Snell/**'
       - '.github/workflows/docker-snell.yml'
+      # 只改 README 时不触发构建（! 排除项必须放在肯定项之后）
+      - '!Snell/README.md'
   schedule:
     - cron: '0 3 * * *'  # 每天 03:00 UTC 检查官方是否有新版
   workflow_dispatch:
