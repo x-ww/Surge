@@ -65,10 +65,6 @@ services:
       - STRICT=1
 ```
 
-- `SERVER` 改成你 Snell 的监听地址（上面是 53634）
-- `PASSWORD` 改成你的密码，客户端的 shadow-tls 密码与这里一致
-- `TLS` 是伪装域名
-
 ## Docker 常用命令
 
 安装 Docker：
