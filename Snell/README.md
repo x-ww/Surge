@@ -51,3 +51,39 @@ services:
 - `SERVER` 改成你 Snell 的监听地址（上面是 53634）
 - `PASSWORD` 改成你的密码，客户端的 shadow-tls 密码与这里一致
 - `TLS` 是伪装域名
+
+## Docker 常用命令
+
+安装 Docker：
+
+```bash
+curl -sSL https://get.docker.com | sh
+```
+
+免 sudo 使用 Docker：
+
+```bash
+sudo usermod -aG docker $USER
+newgrp docker
+docker ps
+```
+
+```bash
+# 停止所有正在运行的容器
+sudo docker stop $(docker ps -q)
+
+# 删除所有容器
+docker rm $(docker ps -a -q)
+
+# 删除所有镜像
+docker rmi $(docker images -q)
+
+# 删除所有网络
+docker network rm $(docker network ls -q)
+
+# 删除所有卷
+docker volume rm $(docker volume ls -q)
+
+# 清理未使用的资源
+docker system prune -a --volumes -f
+```
