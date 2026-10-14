@@ -14,11 +14,4 @@ fi
 
 echo "==> 使用配置文件: $CONF"
 
-CUR_PORT=$(sed -n 's/^listen *=.*:\([0-9][0-9]*\).*/\1/p' "$CONF" | head -1)
-CUR_PSK=$(sed -n 's/^psk *= *//p' "$CONF" | head -1 | tr -d ' \t\r')
-
-echo "==> 端口: $CUR_PORT"
-echo "==> PSK: $CUR_PSK"
-echo "==> Surge 客户端: snell, 服务器IP, $CUR_PORT, psk=$CUR_PSK, version=6, mode=default, reuse=true"
-
 exec /app/snell-server -c "$CONF"

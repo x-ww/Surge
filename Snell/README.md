@@ -14,7 +14,6 @@ cp snell-server.conf.example snell-server.conf
 
 ```bash
 docker compose up -d
-docker compose logs snell   # 看端口和 PSK，含现成的 Surge 配置行
 ```
 
 - 必须挂载 `snell-server.conf`，容器不再自动生成端口/PSK
