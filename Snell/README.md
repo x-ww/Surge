@@ -1,7 +1,3 @@
-# Snell Docker
-
-从官方二进制构建的 Snell Server 镜像（amd64/arm64），推送到 `ghcr.io/x-ww/snell`。
-
 ## 使用
 
 1. 复制示例配置并填好端口和 PSK：
@@ -55,15 +51,3 @@ services:
 - `SERVER` 改成你 Snell 的监听地址（上面是 53634）
 - `PASSWORD` 改成你的密码，客户端的 shadow-tls 密码与这里一致
 - `TLS` 是伪装域名
-
-## 从旧版升级
-
-旧版会在数据卷里自动生成配置。新版不再用数据卷，改为挂载配置文件：
-
-- 想沿用旧配置：从卷里取出，写入 `snell-server.conf`：
-
-  ```bash
-  docker run --rm -v snell-data:/d alpine cat /d/snell-server.conf > snell-server.conf
-  ```
-
-- 确认无用后可删除旧卷：`docker volume rm snell-data`
