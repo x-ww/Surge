@@ -37,11 +37,19 @@ FROM debian:stable-slim
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends ca-certificates \
- && rm -rf /var/lib/apt/lists/*
+ && rm -rf /var/lib/apt/lists/* \
+ && groupadd -g 1000 snell \
+ && useradd -u 1000 -g snell -d /app -s /usr/sbin/nologin snell
 
 COPY --from=download /srv/ /app/
 COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
+
+# snell-server 监听的都是 >1024 的端口，不需要 root；
+# 以非特权用户运行，并把数据目录交给它，保证自动生成的配置可写
+RUN chmod +x /app/entrypoint.sh \
+ && mkdir -p /app/data \
+ && chown -R snell:snell /app
 
 WORKDIR /app
+USER snell
 ENTRYPOINT ["/app/entrypoint.sh"]
