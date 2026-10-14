@@ -70,20 +70,8 @@ docker ps
 
 ```bash
 # 停止所有正在运行的容器
-sudo docker stop $(docker ps -q)
+docker ps -q | xargs -r docker stop
 
-# 删除所有容器
-docker rm $(docker ps -a -q)
-
-# 删除所有镜像
-docker rmi $(docker images -q)
-
-# 删除所有网络
-docker network rm $(docker network ls -q)
-
-# 删除所有卷
-docker volume rm $(docker volume ls -q)
-
-# 清理未使用的资源
+# 清理所有已停止容器、未使用的镜像、网络、卷
 docker system prune -a --volumes -f
 ```
