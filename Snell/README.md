@@ -29,7 +29,7 @@ dns-ip-preference = default
 
 - `listen`：监听地址和端口
 - `psk`：预共享密钥，用 32 位随机字符
-- `mode`：`default` 开启流量整形和加密
+- `mode`：`default` 开启流量整形和加密；`unshaped` 只加密、不整形（吞吐高约 10%）；`unsafe-raw` 不加密不整形，仅限内网或已有安全隧道下使用。服务端和客户端的 `mode` 必须一致
 - `dns`：服务端解析用的 DNS
 - `dns-ip-preference`：DNS 解析结果的地址族偏好（`default` / `prefer-ipv4` / `prefer-ipv6` / `ipv4-only` / `ipv6-only`）
 
