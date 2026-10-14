@@ -22,10 +22,21 @@ docker compose up -d
 
 ## 配合 Shadow-TLS 使用
 
-在 compose 里追加一个 shadow-tls 服务，流量先经 Shadow-TLS 再转发给 Snell：
+snell 和 shadow-tls 一起跑，流量先经 Shadow-TLS 再转发给 Snell：
 
 ```yaml
 services:
+  snell:
+    image: ghcr.io/x-ww/snell:6
+    container_name: snell
+    restart: unless-stopped
+    network_mode: host
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    volumes:
+      - ./snell-server.conf:/app/snell-server.conf:ro
   shadow-tls:
     image: ghcr.io/ihciah/shadow-tls:latest
     container_name: shadow-tls
