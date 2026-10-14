@@ -4,6 +4,13 @@ services:
     container_name: snell
     restart: unless-stopped
     network_mode: host
+    # 以非特权用户运行：禁止通过 setuid 等方式提权，并丢弃全部 capabilities。
+    # 默认 mode 不需要任何 capability；若使用 v5 的 egress-interface，放开下面两行：
+    #   cap_add: [NET_RAW, NET_ADMIN]
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     environment:
       # 留空则首次启动自动生成随机端口和随机 PSK（去日志里看）；
       # 想固定就填上，例如 SNELL_PORT=6160
