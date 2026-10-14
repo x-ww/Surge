@@ -16,6 +16,23 @@ docker compose up -d
 - 镜像每天自动跟进官方最新 v6（beta 和正式版都算）并构建
 - 容器以非特权用户（uid/gid 1000）运行，并丢弃全部 capabilities
 
+## snell-server.conf 配置
+
+```ini
+[snell-server]
+listen = 0.0.0.0:6160
+psk = CHANGE_ME
+mode = default
+dns = 8.8.8.8, 1.1.1.1
+dns-ip-preference = default
+```
+
+- `listen`：监听地址和端口
+- `psk`：预共享密钥，用 32 位随机字符
+- `mode`：`default` 开启流量整形和加密
+- `dns`：服务端解析用的 DNS
+- `dns-ip-preference`：DNS 解析结果的地址族偏好（`default` / `prefer-ipv4` / `prefer-ipv6` / `ipv4-only` / `ipv6-only`）
+
 ## 配合 Shadow-TLS 使用
 
 snell 和 shadow-tls 一起跑，流量先经 Shadow-TLS 再转发给 Snell：
@@ -75,20 +92,3 @@ docker ps -q | xargs -r docker stop
 # 清理所有已停止容器、未使用的镜像、网络、卷
 docker system prune -a --volumes -f
 ```
-
-## snell-server.conf 配置
-
-```ini
-[snell-server]
-listen = 0.0.0.0:6160
-psk = CHANGE_ME
-mode = default
-dns = 8.8.8.8, 1.1.1.1
-dns-ip-preference = default
-```
-
-- `listen`：监听地址和端口
-- `psk`：预共享密钥，用 32 位随机字符
-- `mode`：`default` 开启流量整形和加密
-- `dns`：服务端解析用的 DNS
-- `dns-ip-preference`：DNS 解析结果的地址族偏好（`default` / `prefer-ipv4` / `prefer-ipv6` / `ipv4-only` / `ipv6-only`）
