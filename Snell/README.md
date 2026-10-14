@@ -12,9 +12,9 @@ cp snell-server.conf.example snell-server.conf
 docker compose up -d
 ```
 
-- 必须挂载 `snell-server.conf`，容器不再自动生成端口/PSK
+- 必须挂载 `snell-server.conf`
 - 镜像每天自动跟进官方最新 v6（beta 和正式版都算）并构建
-- 容器以非特权用户（uid/gid 1000）运行，并丢弃全部 capabilities；若使用 v5 的 `egress-interface`，需在 compose 里放开 `cap_add: [NET_RAW, NET_ADMIN]`
+- 容器以非特权用户（uid/gid 1000）运行，并丢弃全部 capabilities
 
 ## 配合 Shadow-TLS 使用
 
