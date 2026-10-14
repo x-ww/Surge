@@ -75,3 +75,20 @@ docker ps -q | xargs -r docker stop
 # 清理所有已停止容器、未使用的镜像、网络、卷
 docker system prune -a --volumes -f
 ```
+
+## snell-server.conf 配置
+
+```ini
+[snell-server]
+listen = 0.0.0.0:6160
+psk = CHANGE_ME
+mode = default
+dns = 8.8.8.8, 1.1.1.1
+dns-ip-preference = default
+```
+
+- `listen`：监听地址和端口
+- `psk`：预共享密钥，用 32 位随机字符
+- `mode`：`default` 开启流量整形和加密
+- `dns`：服务端解析用的 DNS
+- `dns-ip-preference`：DNS 解析结果的地址族偏好（`default` / `prefer-ipv4` / `prefer-ipv6` / `ipv4-only` / `ipv6-only`）
