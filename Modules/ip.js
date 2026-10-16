@@ -1,6 +1,6 @@
 (async () => {
   // 数据链路(单栈展示):
-  //   ip.sb api-ipv4/api-ipv6 -> 两栈地址 + 位置 + ISP(geoip 自带,不再逐地址二次查询)
+  //   ip.sb api-ipv4/api-ipv6 -> 两栈地址 + ISP(geoip 自带,不再逐地址二次查询)
   //   HackMyIP /api/score     -> 只给"当前调用者"打质量分/类型,IP 对得上才采用,绝不张冠李戴
   //   AbuseIPDB(可选)         -> 所展示地址的信誉分,需要模块参数 abuseipdb_key
   // 两栈仍各查一次(单栈环境可用,且质量分只认出口地址,不查就丢),但面板只展示一个:
@@ -46,8 +46,6 @@
     if (!r || !r.ip) return null;
     return {
       ip:           r.ip,
-      city:         r.city || "",
-      country:      r.country || r.country_code || "",
       country_code: r.country_code || "",
       asn:          typeof r.asn === "number" ? r.asn : null,
       isp:          r.isp || r.organization || "",
@@ -82,11 +80,6 @@
     return { abuse: data.abuseConfidenceScore, reports: data.totalReports || 0 };
   };
 
-  const locationInfo = (geo) => [geo.city, geo.country]
-    .filter(Boolean)
-    .filter((part, index, parts) => index === 0 || part.toLowerCase() !== parts[index - 1].toLowerCase())
-    .join(", ");
-
   // type 和两个 is_* 标可能指向同一类,去重后拼成一行
   const typeLabel = (q) => {
     const label = ({ datacenter: "数据中心", residential: "住宅", vpn: "VPN" }[q.type] || q.type);
@@ -120,7 +113,7 @@
     return f ? `${f} ${geo.ip}` : geo.ip;
   };
 
-  const render = (geo) => [locationInfo(geo), networkInfo(geo), statusText(geo)]
+  const render = (geo) => [networkInfo(geo), statusText(geo)]
     .filter(Boolean)
     .join("\n");
 
