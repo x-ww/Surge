@@ -90,16 +90,23 @@
   // ASN + ISP 合成一行;拿不到 ASN 就只剩 ISP
   const networkInfo = (geo) => [geo.asn ? `AS${geo.asn}` : "", geo.isp].filter(Boolean).join(" · ");
 
-  // 类型 + 质量 + 信誉合成一行;缺的段直接不出现
-  const statusText = (geo) => {
+  // 身份行：ASN + ISP + 类型
+  const identityText = (geo) => {
+    const parts = [networkInfo(geo)];
     const q = geo.quality;
-    const parts = [];
     if (q) {
       const t = typeLabel(q);
       if (t) parts.push(t);
-      if (q.score !== "") parts.push(`质量 ${q.score}${q.grade ? `/${q.grade}` : ""}`);
     }
-    if (geo.reputation) parts.push(`信誉 ${100 - geo.reputation.abuse}${geo.reputation.reports ? `(举报 ${geo.reputation.reports})` : ""}`);
+    return parts.filter(Boolean).join(" · ");
+  };
+
+  // 评分行：质量 + 信誉
+  const scoreText = (geo) => {
+    const parts = [];
+    const q = geo.quality;
+    if (q && q.score !== "") parts.push(`质量 ${q.score}${q.grade ? `/${q.grade}` : ""}`);
+    if (geo.reputation) parts.push(`信誉 ${100 - geo.reputation.abuse}`);
     return parts.join(" · ");
   };
 
@@ -113,7 +120,7 @@
     return f ? `${f} ${geo.ip}` : geo.ip;
   };
 
-  const render = (geo) => [networkInfo(geo), statusText(geo)]
+  const render = (geo) => [identityText(geo), scoreText(geo)]
     .filter(Boolean)
     .join("\n");
 
