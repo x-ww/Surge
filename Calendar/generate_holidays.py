@@ -12,7 +12,7 @@ import json
 import sys
 import urllib.error
 import urllib.request
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, timedelta
 from pathlib import Path
 
 UPSTREAM = "https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/{year}.json"
@@ -63,7 +63,9 @@ def fold_line(line: str) -> str:
 
 
 def build_ics(days: list[dict]) -> str:
-    now = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    # DTSTAMP 取数据覆盖的最后一天：同批数据生成的文件字节完全一致，
+    # 避免每周 workflow 仅因时间戳不同而产生无意义提交。
+    dtstamp = max(d["date"] for d in days).replace("-", "") + "T000000Z"
     lines = [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
@@ -88,7 +90,7 @@ def build_ics(days: list[dict]) -> str:
         lines += [
             "BEGIN:VEVENT",
             f"UID:china-holiday-{d.isoformat()}@x-ww",
-            f"DTSTAMP:{now}",
+            f"DTSTAMP:{dtstamp}",
             f"DTSTART;VALUE=DATE:{d.strftime('%Y%m%d')}",
             f"DTEND;VALUE=DATE:{end.strftime('%Y%m%d')}",
             f"SUMMARY:{escape_text(summary)}",
