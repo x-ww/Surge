@@ -91,3 +91,8 @@ jobs:
           build-args: |
             SNELL_VERSION=${{ steps.version.outputs.version }}
           tags: ${{ steps.tags.outputs.tags }}
+          # 复用上一轮的层缓存：apt 安装和下载层在 Snell 升版时基本不变，
+          # 命中后每天定时构建（arm64 走 QEMU）能省下数分钟。
+          # mode=max 让中间阶段的层也进缓存，否则 download 阶段存不下来。
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
