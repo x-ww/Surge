@@ -1,0 +1,4 @@
+# Release 的源码包只打包 Snell 目录（GitHub 按 tag 自动生成的 zip/tar.gz 遵循 export-ignore）
+* export-ignore
+Snell/ !export-ignore
+Snell/** !export-ignore
