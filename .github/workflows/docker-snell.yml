@@ -18,7 +18,7 @@ on:
         default: ''
 
 permissions:
-  contents: read
+  contents: write  # 发 GitHub Release 需要写权限
   packages: write
 
 jobs:
@@ -96,3 +96,48 @@ jobs:
           # mode=max 让中间阶段的层也进缓存，否则 download 阶段存不下来。
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # 构建完成后把官方更新说明发到 GitHub Releases（同一版本已发过则跳过）
+      - name: 发布 GitHub Release
+        if: github.event_name != 'schedule' || steps.check.outputs.exists != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          V="${{ steps.version.outputs.version }}"
+          TAG="snell-v$V"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG 已存在，跳过"
+            exit 0
+          fi
+          NOTES_URL="https://kb.nssurge.com/surge-knowledge-base/release-notes/snell.md"
+          RAW=$(curl -fsSL --max-time 20 "$NOTES_URL")
+          # 从官方 release notes 切出该版本的小节；RC 版本切不到时回退到基线版本小节
+          extract() {
+            echo "$RAW" | awk -v h="### v$1" '
+              $0 == h {p=1; next}
+              p && /^### / {exit}
+              p {print}'
+          }
+          SECTION=$(extract "$V"); USED="$V"
+          if [ -z "$SECTION" ]; then
+            BASE=$(echo "$V" | sed -E 's/[^0-9.].*//')
+            if [ "$BASE" != "$V" ]; then SECTION=$(extract "$BASE"); USED="$BASE"; fi
+          fi
+          OFFICIAL_PAGE="${NOTES_URL%.md}"
+          if [ -n "$SECTION" ]; then
+            BODY="Docker 镜像 ghcr.io/x-ww/snell:${V} 已构建推送。
+
+          ## 官方更新说明（v${USED}）
+
+          ${SECTION}
+
+          ---
+          官方原文：${OFFICIAL_PAGE}"
+          else
+            BODY="Docker 镜像 ghcr.io/x-ww/snell:${V} 已构建推送。
+
+          官方 release notes 中暂无 v${V} 的单独说明，详见官方原文：${OFFICIAL_PAGE}"
+          fi
+          gh release create "$TAG" --title "Snell v${V}" --notes "$BODY"
+          echo "已创建 Release $TAG"
