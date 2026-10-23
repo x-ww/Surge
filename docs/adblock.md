@@ -77,7 +77,7 @@ https://raw.githubusercontent.com/x-ww/Surge/main/Modules/adblock.sgmodule
 ### 1. 离线检查（无需 Surge，任何平台可用）
 
 ```bash
-python3 scripts/check-module.py Modules/adblock.sgmodule
+python3 Assets/check-module.py Modules/adblock.sgmodule
 ```
 
 检查元数据完整性、规则语法、`pre-matching` 语义、远程 URL 可达性、内联域名数量。

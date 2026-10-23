@@ -5,12 +5,12 @@ on:
     branches: [main]
     paths:
       - 'Modules/**'
-      - 'scripts/**'
+      - 'Assets/**'
       - '.github/workflows/check-module.yml'
   pull_request:
     paths:
       - 'Modules/**'
-      - 'scripts/**'
+      - 'Assets/**'
   workflow_dispatch:
 
 jobs:
@@ -27,7 +27,7 @@ jobs:
       # 离线检查：元数据、规则语法、pre-matching 语义、内联域名数量
       # 不依赖网络，任何抖动都不会导致误报
       - name: Offline check
-        run: python3 scripts/check-module.py --no-network Modules/*.sgmodule
+        run: python3 Assets/check-module.py --no-network Modules/*.sgmodule
 
   upstream:
     name: Upstream URL reachability
@@ -43,4 +43,4 @@ jobs:
 
       # 仅检查远程 URL 是否可达，脚本内置 3 次重试
       - name: Check upstream URLs
-        run: python3 scripts/check-module.py Modules/adblock.sgmodule
+        run: python3 Assets/check-module.py Modules/adblock.sgmodule

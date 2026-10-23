@@ -3,8 +3,8 @@
 Surge 模块离线校验器
 
 用法：
-    python3 scripts/check-module.py Modules/adblock.sgmodule [更多文件...]
-    python3 scripts/check-module.py --no-network Modules/*.sgmodule
+    python3 Assets/check-module.py Modules/adblock.sgmodule [更多文件...]
+    python3 Assets/check-module.py --no-network Modules/*.sgmodule
 
 检查项：
     1. 元数据完整性（#!name / #!desc）
