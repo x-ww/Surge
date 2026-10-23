@@ -72,6 +72,26 @@ https://raw.githubusercontent.com/x-ww/Surge/main/Modules/adblock.sgmodule
 **注意**：`hotjar.com`、`mixpanel.com`、`amplitude.com`、`segment.com`、`clarity.ms`
 这类埋点分析域名**不在白名单内**，因为拦截它们正是本模块的目的，不算误杀。
 
+## 可选规则
+
+模块默认不启用以下规则，按需在 `[Rule]` 段末尾手动添加：
+
+```ini
+# 钓鱼/诈骗域名（+13 万条，误杀风险略高，Surge 5 Mac 以上性能无损）
+DOMAIN-SET,https://ruleset.skk.moe/List/domainset/reject_phishing.conf,REJECT,pre-matching
+
+# 搜狗输入法输入回传（隐私相关，开启后会影响词库同步与账号同步）
+RULE-SET,https://ruleset.skk.moe/List/non_ip/sogouinput.conf,REJECT-DROP
+```
+
+## 编写注意事项
+
+改动本模块时需遵守以下限制：
+
+1. `pre-matching` 只能配 REJECT 系策略，配 `DIRECT` 会导致配置校验失败
+2. 模块规则只能使用内建策略（`DIRECT` / `REJECT` / `REJECT-TINYGIF` 等），不能用代理组
+3. 白名单必须写在 REJECT 规则之上，否则不生效
+
 ## 本地校验
 
 ### 1. 离线检查（无需 Surge，任何平台可用）
