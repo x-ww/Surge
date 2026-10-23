@@ -58,12 +58,14 @@ services:
     environment:
       - MODE=server
       - LISTEN=0.0.0.0:443
-      - SERVER=127.0.0.1:53634
+      - SERVER=127.0.0.1:6160
       - TLS=cloud.tencent.com:443
       - PASSWORD=xxx
       - V3=1
       - STRICT=1
 ```
+
+> `SERVER` 必须与 `snell-server.conf` 里的 `listen` 端口一致（上面示例均为 `6160`）。
 
 ## Docker 常用命令
 

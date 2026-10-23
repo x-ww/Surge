@@ -1,7 +1,7 @@
 # 下载层：curl/unzip 只在这里用，不进最终镜像
 FROM debian:stable-slim AS download
 
-# SNELL_VERSION 为空时自动解析官方最新 v6；也可锁定具体版本，如 6.0.0rc2 / 5.0.1
+# SNELL_VERSION 为空时自动解析官方最新 v6；也可锁定具体版本，如 6.0.0rc2
 ARG SNELL_VERSION=
 # buildx 自动传入目标架构；手动 docker build 时回退到本机架构
 ARG TARGETARCH
