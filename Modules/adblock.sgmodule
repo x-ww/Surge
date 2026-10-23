@@ -1,0 +1,75 @@
+#!name=AdBlock
+#!desc=去广告：引用上游公开列表 + 修补已知误杀（不内联拦截域名，仅含少量白名单）。需开启 MITM 才能完整生效
+#!category=x-ww
+#!author=x-ww
+#!homepage=https://github.com/x-ww/Surge
+#!requirement=CORE_VERSION>=20
+
+[Rule]
+# ============================================================================
+# 白名单：必须写在 REJECT 规则之上（Surge 自上而下匹配，放下面等于没写）
+# 模块的规则会被插入到主配置规则列表的最顶部，所以这里的顺序就是最终顺序
+# ============================================================================
+# 反欺诈服务，部分电商结账依赖，拦截可能影响支付
+DOMAIN-SUFFIX,forter.com,DIRECT
+
+# 以下为「疑似误杀」候选，按需取消注释：
+# 开发者监控面板，用户侧无感
+# DOMAIN-SUFFIX,newrelic.com,DIRECT
+# DOMAIN-SUFFIX,sentry.io,DIRECT
+# 隐私友好型统计（不追踪个人），拦截会破坏站长统计
+# DOMAIN-SUFFIX,plausible.io,DIRECT
+# DOMAIN-SUFFIX,simpleanalytics.com,DIRECT
+# DOMAIN-SUFFIX,umami.is,DIRECT
+
+# ============================================================================
+# 第 1 层：域名主体（23.6 万条，DOMAIN-SET 走磁盘索引，内存开销低）
+# 上游：217heidai/adblockfilters（GPL-3.0，仅引用 URL 不复制内容）
+# 每 8 小时更新，16 个上游源合并
+# ============================================================================
+DOMAIN-SET,https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblocksurge.list,REJECT,pre-matching
+
+# ============================================================================
+# 第 2 层：通配符 + 关键词（补 DOMAIN-SET 表达不了的模式）
+# 上游：Cats-Team/AdRules（0BSD）
+# 含 409 条 DOMAIN-WILDCARD（如 *-ad-sign.byteimg.com）+ 24 条 DOMAIN-KEYWORD
+# ============================================================================
+RULE-SET,https://adrules.top/adrules-surge.conf,REJECT,pre-matching
+
+# ============================================================================
+# 第 3 层：精准规则（含 URL-REGEX 路径级拦截，不误伤整站）
+# 上游：SukkaW/Surge（AGPL-3.0，仅引用 URL 不复制内容）
+# 注意：URL-REGEX 子规则需 MITM 才生效，不装 MITM 时其余规则照常工作
+# ============================================================================
+RULE-SET,https://ruleset.skk.moe/List/non_ip/reject.conf,REJECT,pre-matching
+
+# ============================================================================
+# 第 4 层：丢弃型拦截（静默丢包，广告 SDK 不会重试，比 REJECT 更省电）
+# ============================================================================
+RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-drop.conf,REJECT-DROP,pre-matching
+RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf,REJECT-NO-DROP,pre-matching
+
+# ============================================================================
+# 第 5 层：广告落地页 IP（运营商 NXDOMAIN 劫持页）
+# 会触发 DNS 解析，必须放在所有域名规则之后
+# ============================================================================
+RULE-SET,https://ruleset.skk.moe/List/ip/reject.conf,REJECT-DROP
+
+# ============================================================================
+# 可选，按需取消注释
+# ============================================================================
+# 钓鱼/诈骗域名（+13 万条，误杀风险略高，Surge 5 Mac 以上性能无损）
+# DOMAIN-SET,https://ruleset.skk.moe/List/domainset/reject_phishing.conf,REJECT,pre-matching
+
+# 搜狗输入法输入回传（隐私相关，开启后会影响词库同步与账号同步）
+# RULE-SET,https://ruleset.skk.moe/List/non_ip/sogouinput.conf,REJECT-DROP
+
+# ============================================================================
+# 性能与兼容说明
+# ============================================================================
+# 1. pre-matching 只能配 REJECT 系策略，配 DIRECT 会导致配置校验失败
+# 2. 模块规则只能使用内建策略（DIRECT / REJECT / REJECT-TINYGIF 等），不能用代理组
+# 3. 国内下载缓慢时可换镜像（改完记得验证内容一致）：
+#    https://cdn.jsdelivr.net/gh/217heidai/adblockfilters@main/rules/adblocksurge.list
+#    https://ruleset-mirror.skk.moe/List/...（Sukka 官方镜像）
+#    https://gp.adrules.top/adrules-surge.conf（AdRules 镜像）

@@ -1,0 +1,46 @@
+name: Check Surge Modules
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Modules/**'
+      - 'scripts/**'
+      - '.github/workflows/check-module.yml'
+  pull_request:
+    paths:
+      - 'Modules/**'
+      - 'scripts/**'
+  workflow_dispatch:
+
+jobs:
+  syntax:
+    name: Syntax & policy check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # 离线检查：元数据、规则语法、pre-matching 语义、内联域名数量
+      # 不依赖网络，任何抖动都不会导致误报
+      - name: Offline check
+        run: python3 scripts/check-module.py --no-network Modules/*.sgmodule
+
+  upstream:
+    name: Upstream URL reachability
+    runs-on: ubuntu-latest
+    # 上游站点偶发不可达不应阻塞提交，因此单独成 job 且不设为必需
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # 仅检查远程 URL 是否可达，脚本内置 3 次重试
+      - name: Check upstream URLs
+        run: python3 scripts/check-module.py Modules/adblock.sgmodule
