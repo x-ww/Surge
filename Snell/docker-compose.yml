@@ -4,6 +4,10 @@ services:
     container_name: snell
     restart: unless-stopped
     network_mode: host
+    # 根文件系统只读：Snell 只需读取挂载的配置，不写盘
+    read_only: true
+    tmpfs:
+      - /tmp
     security_opt:
       - no-new-privileges:true
     cap_drop:
