@@ -6,11 +6,11 @@
 #!requirement=CORE_VERSION>=20
 
 [Rule]
-# 域名主体（23.6 万条）
-DOMAIN-SET,https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblocksurge.list,REJECT
-# 通配符 + 关键词
-RULE-SET,https://adrules.top/adrules-surge.conf,REJECT
-# 精准规则（含 URL-REGEX，需 MITM）
+# 域名主体（Sukka 规则集，DOMAIN-SET 磁盘索引，内存开销低）
+DOMAIN-SET,https://ruleset.skk.moe/List/domainset/reject.conf,REJECT
+DOMAIN-SET,https://ruleset.skk.moe/List/domainset/reject_extra.conf,REJECT
+DOMAIN-SET,https://ruleset.skk.moe/List/domainset/reject_phishing.conf,REJECT
+# 通配符 + 关键词（含 doubleclick 等 KEYWORD 规则）
 RULE-SET,https://ruleset.skk.moe/List/non_ip/reject.conf,REJECT
 # 静默丢包
 RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-drop.conf,REJECT-DROP
