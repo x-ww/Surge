@@ -6,17 +6,35 @@
 #!requirement=CORE_VERSION>=20
 
 [Rule]
+# 视频站放行：上游列表误伤了 B 站播放链路，必须在 REJECT 之上
+# 屏蔽 mcdn/httpdns 后 App 拿不到播放地址，表现为无限缓冲或黑屏
+DOMAIN,httpdns.bilivideo.com,DIRECT
+DOMAIN,dataflow.biliapi.com,DIRECT
+DOMAIN-SUFFIX,mcdn.bilivideo.cn,DIRECT
+DOMAIN-SUFFIX,mcdn.bilivideo.com,DIRECT
+DOMAIN-SUFFIX,mcdn.bilivideo.net,DIRECT
+DOMAIN-SUFFIX,mountaintoys.cn,DIRECT
+DOMAIN-SUFFIX,bilivideo.com,DIRECT
+DOMAIN-SUFFIX,bilivideo.cn,DIRECT
+DOMAIN-SUFFIX,bilivideo.net,DIRECT
+DOMAIN-SUFFIX,biliapi.com,DIRECT
+DOMAIN-SUFFIX,biliapi.net,DIRECT
+DOMAIN-SUFFIX,bilibili.com,DIRECT
+DOMAIN-SUFFIX,hdslb.com,DIRECT
+# B 站 HTTPDNS 换 IP 接口（形如 http://203.119.206.9/191607/resolve?host=...）
+URL-REGEX,^https?://\d+\.\d+\.\d+\.\d+(:\d+)?/\d+/(resolve|sign_d),DIRECT
+
 # 白名单，必须写在 REJECT 之上
 DOMAIN-SUFFIX,forter.com,DIRECT
 
 # 域名主体（23.6 万条）
-DOMAIN-SET,https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblocksurge.list,REJECT,pre-matching
+DOMAIN-SET,https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblocksurge.list,REJECT
 # 通配符 + 关键词
-RULE-SET,https://adrules.top/adrules-surge.conf,REJECT,pre-matching
+RULE-SET,https://adrules.top/adrules-surge.conf,REJECT
 # 精准规则（含 URL-REGEX，需 MITM）
-RULE-SET,https://ruleset.skk.moe/List/non_ip/reject.conf,REJECT,pre-matching
+RULE-SET,https://ruleset.skk.moe/List/non_ip/reject.conf,REJECT
 # 静默丢包
-RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-drop.conf,REJECT-DROP,pre-matching
-RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf,REJECT-NO-DROP,pre-matching
+RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-drop.conf,REJECT-DROP
+RULE-SET,https://ruleset.skk.moe/List/non_ip/reject-no-drop.conf,REJECT-NO-DROP
 # 广告落地页 IP（放最后，会触发 DNS 解析）
 RULE-SET,https://ruleset.skk.moe/List/ip/reject.conf,REJECT-DROP
